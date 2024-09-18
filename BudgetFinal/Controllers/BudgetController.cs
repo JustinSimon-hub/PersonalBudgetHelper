@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using BudgetFinal.Models;
+using BudgetFinal.Data;
 
 namespace BudgetFinal.Controllers
 {
+    
     public class BudgetController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -16,22 +18,34 @@ namespace BudgetFinal.Controllers
       
         public IActionResult Index()
         {
-                var transactions = _context.Transactions.ToList();
-                var totalIncome = transactions.Where(t => t.Amount > 0).Sum(t => t.Amount);
-                var totalExpenses = transactions.Where(t => t.Amount < 0).Sum(t => t.Amount);
-                var balance = totalIncome + totalExpenses;
+                 var transactions = _context.Transactions.ToList();
+        var totalIncome = transactions.Where(t => t.Amount > 0).Sum(t => t.Amount);
+        var totalExpenses = transactions.Where(t => t.Amount < 0).Sum(t => t.Amount);
+        var balance = totalIncome + totalExpenses;
+                var viewModel = new BudgetViewModel
+                {
+                    Transactions = transactions,
+                    TotalIncome = totalIncome,
+                    TotalExpenses = totalExpenses,
+                    Balance = balance
+                };
+                return View(viewModel);
         } 
                 
 
-        public IActionResult AddTransaction()
-        {
-            return View();
-        }
-
         [HttpPost]
+
         public IActionResult AddTransaction(Transaction transaction)
         {
-            return RedirectToAction("Index");
+            if(ModelState.IsValid)
+            {
+                _context.Transactions.Add(transaction);
+                _context.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return View(transaction);
         }
+
+       
     }
 }

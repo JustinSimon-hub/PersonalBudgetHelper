@@ -18,6 +18,10 @@ build_property.GenerateRazorMetadataSourceChecksumAttributes =
 build_property.MSBuildProjectDirectory = /Users/justinsimon/Desktop/repos3/Budgeting_PortfolioProject/BudgetFinal
 build_property._RazorSourceGeneratorDebug = 
 
+[/Users/justinsimon/Desktop/repos3/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/justinsimon/Desktop/repos3/Budgeting_PortfolioProject/BudgetFinal/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9JbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 

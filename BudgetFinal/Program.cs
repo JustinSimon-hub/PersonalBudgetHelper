@@ -1,7 +1,13 @@
+using BudgetFinal.Hub;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
@@ -15,6 +21,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+
+//Code for telling program: when you get a request at the path '/budgethub', direct it to the BudgetHub class for handling."app.MapHub<BudgetHub>("/budgethub");    
 
 app.UseRouting();
 

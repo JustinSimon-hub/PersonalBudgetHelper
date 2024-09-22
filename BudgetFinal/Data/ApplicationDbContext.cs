@@ -1,12 +1,17 @@
 using System.Transactions;
 using Microsoft.EntityFrameworkCore;
+using BudgetFinal.Models;
 
-namespace BudgetFinal.Data
-{
     public class ApplicationDbContext : DbContext
     {
         //This property is a DbSet of Transaction objects
-        public DbSet<Transaction> Transactions { get; set; }
 
+            public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
+    {
     }
-}
+
+    public DbSet<Transaction> Transactions { get; set; }
+
+       
+    }

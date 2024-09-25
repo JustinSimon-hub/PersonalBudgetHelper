@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/justinsimon/Desktop/repos3/Budgeting_PortfolioProject/BudgetFinal/BudgetFinal.csproj": {}
+    "/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/BudgetFinal.csproj": {}
   },
   "projects": {
-    "/Users/justinsimon/Desktop/repos3/Budgeting_PortfolioProject/BudgetFinal/BudgetFinal.csproj": {
+    "/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/BudgetFinal.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/justinsimon/Desktop/repos3/Budgeting_PortfolioProject/BudgetFinal/BudgetFinal.csproj",
+        "projectUniqueName": "/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/BudgetFinal.csproj",
         "projectName": "BudgetFinal",
-        "projectPath": "/Users/justinsimon/Desktop/repos3/Budgeting_PortfolioProject/BudgetFinal/BudgetFinal.csproj",
+        "projectPath": "/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/BudgetFinal.csproj",
         "packagesPath": "/Users/justinsimon/.nuget/packages/",
-        "outputPath": "/Users/justinsimon/Desktop/repos3/Budgeting_PortfolioProject/BudgetFinal/obj/",
+        "outputPath": "/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/justinsimon/.nuget/NuGet/NuGet.Config"
@@ -43,6 +43,14 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.8, )"
+            },
+            "Microsoft.AspNetCore.Identity.UI": {
+              "target": "Package",
+              "version": "[8.0.8, )"
+            },
             "Microsoft.AspNetCore.SignalR": {
               "target": "Package",
               "version": "[1.1.0, )"

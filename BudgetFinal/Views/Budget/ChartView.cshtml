@@ -1,0 +1,44 @@
+@{
+    ViewData["Title"] = "Budget Overview";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<!-- The canvas element where the chart will be drawn -->
+<canvas id="budgetChart" width="400" height="200"></canvas>
+
+<script>
+    // Fetch data from the controller to populate the chart
+    fetch('@Url.Action("VisualizeData", "Transaction")')
+        .then(response => response.json())
+        .then(data => {
+            // Create the chart
+            var ctx = document.getElementById('budgetChart').getContext('2d');
+            var budgetChart = new Chart(ctx, {
+                type: 'bar',  // Define the type of chart (bar chart here)
+                data: {
+                    labels: ['Income', 'Expenses'],  // The labels for the data
+                    datasets: [{
+                        label: 'Budget Overview',
+                        data: [data.income, Math.abs(data.expenses)], // Use the fetched data
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.2)',  // Color for income
+                            'rgba(255, 99, 132, 0.2)'   // Color for expenses
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+</script>

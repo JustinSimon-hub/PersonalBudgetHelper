@@ -1,5 +1,8 @@
+using BudgetFinal.Data;
 using BudgetFinal.Hub;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Testing.Areas.Identity.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +11,11 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
 
 var app = builder.Build();
 
@@ -26,6 +34,8 @@ app.UseStaticFiles();
 //Code for telling program: when you get a request at the path '/budgethub', direct it to the BudgetHub class for handling."app.MapHub<BudgetHub>("/budgethub");    
 
 app.UseRouting();
+//middleware for authentication and authorization
+app.UseAuthentication();
 
 app.UseAuthorization();
 

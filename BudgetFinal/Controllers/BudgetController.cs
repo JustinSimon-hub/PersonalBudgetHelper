@@ -57,23 +57,47 @@ public class BudgetController : Controller
         return View(transaction);
     }
 
-        //Adding methods to update and delete transactions
-        public IActionResult UpdateTransaction(Transaction transaction)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Transactions.Update(transaction);
-                _context.SaveChanges();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(transaction);
-        }
 
-        public IActionResult DeleteTransaction(int id)
+        //Update actions requires both a get and post method
+        //one for retrieving the obj and one for submitting the changes to the server 
+    public IActionResult UpdateTransaction(int id)
+    {
+        var transaction = _context.Transactions.Find(id);
+        if(transaction == null)
         {
-            var transaction = _context.Transactions.Find(id);
-            _context.Transactions.Remove(transaction);
+            return NotFound();
+        }
+        return View(transaction);
+    }
+    //Adding methods to update and delete transactions
+    [HttpPost]
+    public IActionResult UpdateTransaction(Transaction transaction)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.Transactions.Update(transaction);
             _context.SaveChanges();
             return RedirectToAction(nameof(Index));
         }
+        return View(transaction);
+    }
+
+
+
+    [HttpPost]
+   [HttpPost]
+public IActionResult DeleteTransaction(int id)
+{
+    var transaction = _context.Transactions.Find(id);
+    if (transaction == null)
+    {
+        return NotFound();
+    }
+
+    _context.Transactions.Remove(transaction);
+    _context.SaveChanges();
+
+    return RedirectToAction("Index");
+}
+
 }

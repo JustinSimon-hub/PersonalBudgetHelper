@@ -1,11 +1,14 @@
 @model BudgetViewModel
-<h2>Budget Overview </h2>
+
+<h2>Budget Overview</h2>
+
 <div>
     <p>Total Income: @Model.TotalIncome</p>
     <p>Total Expenses: @Model.TotalExpenses</p>
     <p>Balance: @Model.Balance</p>
 </div>
 
+<!-- Chart for Income vs Expenses -->
 <canvas id="budgetChart" width="400" height="400"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,12 +20,13 @@
             labels: ['Income', 'Expenses'],
             datasets: [{
                 data: [@Model.TotalIncome, @Math.Abs(@Model.TotalExpenses)],
-                backgroundColor: ['#36A2EB', '#FF6384']
+                backgroundColor: ['#36A2EB', '#FF6384'] // Blue for income, red for expenses
             }]
         },
     });
 </script>
 
+<!-- Form to add a new transaction -->
 <form asp-action="AddTransaction" method="post">
     <div class="form-group">
         <label>Description</label>
@@ -36,3 +40,27 @@
         <input type="submit" value="Add Transaction" class="btn btn-primary" />
     </div>
 </form>
+
+<!-- New section: List of all transactions (income and expenses) -->
+<h2>All Transactions</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Type</th> <!-- Income or Expense -->
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var transaction in Model.Transactions)
+        {
+            <tr>
+                <td>@transaction.Description</td>
+                <td>@transaction.Amount</td>
+                <td>@(transaction.Amount > 0 ? "Income" : "Expense")</td> <!-- Distinguish Income/Expense -->
+                <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
+            </tr>
+        }
+    </tbody>
+</table>

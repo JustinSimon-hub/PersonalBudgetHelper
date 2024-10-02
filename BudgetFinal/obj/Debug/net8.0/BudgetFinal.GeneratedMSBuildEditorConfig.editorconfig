@@ -58,12 +58,12 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L0NoYXJ0Vmlldy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/Edit.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L0VkaXQuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
 [/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/UpdateTransaction.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L1VwZGF0ZVRyYW5zYWN0aW9uLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Home/Index.cshtml]

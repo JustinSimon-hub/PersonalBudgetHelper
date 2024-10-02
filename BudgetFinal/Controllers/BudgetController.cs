@@ -60,6 +60,8 @@ public class BudgetController : Controller
 
         //Update actions requires both a get and post method
         //one for retrieving the obj and one for submitting the changes to the server 
+    //Loads the transaction to be updated/view
+    [HttpGet]   
     public IActionResult UpdateTransaction(int id)
     {
         var transaction = _context.Transactions.Find(id);
@@ -84,7 +86,7 @@ public class BudgetController : Controller
 
 
 
-    [HttpPost]
+
    [HttpPost]
 public IActionResult DeleteTransaction(int id)
 {

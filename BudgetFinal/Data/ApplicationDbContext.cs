@@ -12,7 +12,8 @@ using BudgetFinal.Models;
     }
 
     public DbSet<Transaction> Transactions { get; set; }
-
+    //This property is a DbSet of Category objects
+    public DbSet<Category> Categories { get; set; }
        
     }
 

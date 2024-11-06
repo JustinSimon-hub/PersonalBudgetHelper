@@ -104,6 +104,64 @@ public IActionResult DeleteTransaction(int id)
     return RedirectToAction("Index");
 }
 
+//Actions for filtering transactions
+public async Task<ReportViewModel> GetMonthlyReport(int userId, int month, int year)
+{
+    var report = new ReportViewModel();
+    //Get income and expenses for the specified month and year
+    report.TotalIncome = await _context.Transactions
+        .Where(t => t.UserId == userId && t.TransactionType == "Income" &&
+                    t.Date.Month == month && t.Date.Year == year)
+        .SumAsync(t => t.Amount);
+
+    report.TotalExpenses = await _context.Transactions
+        .Where(t => t.UserId == userId && t.TransactionType == "Expense" &&
+                    t.Date.Month == month && t.Date.Year == year)
+        .SumAsync(t => t.Amount);
+
+    report.Balance = report.TotalIncome - report.TotalExpenses;
+
+    // Breakdown by Category
+    report.CategoryBreakdown = await _context.Transactions
+        .Where(t => t.UserId == userId && t.Date.Month == month && t.Date.Year == year)
+        .GroupBy(t => t.Category)
+        .Select(g => new CategorySummary
+        {
+            Category = g.Key,
+            TotalAmount = g.Sum(t => t.Amount)
+        }).ToListAsync();
+
+    return report;
+}
+
+    
+
+[HttpGet]
+public async Task<IActionResult> GenerateReport(string reportType, int month = 0, int year = 0)
+{
+    var userId = GetCurrentUserId(); // Assume a method to get the logged-in user's ID
+    ReportViewModel report = null;
+
+    if (reportType == "Monthly" && month > 0 && year > 0)
+    {
+        report = await _reportService.GetMonthlyReport(userId, month, year);
+    }
+    else if (reportType == "Quarterly" && year > 0)
+    {
+        report = await _reportService.GetQuarterlyReport(userId, year);
+    }
+    else if (reportType == "Yearly" && year > 0)
+    {
+        report = await _reportService.GetYearlyReport(userId, year);
+    }
+
+    return View("Report", report);
+}
+
+
+
+
+
 
 //Category filtering actions 
 //  public IActionResult TransactionsByCategory(int categoryId)

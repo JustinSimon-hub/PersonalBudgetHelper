@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+namespace BudgetFinal.Models{
 public class Transaction
     {
      public int Id { get; set; }
@@ -9,3 +10,4 @@ public class Transaction
 
     public DateTime Date { get; set; }
     }
+}

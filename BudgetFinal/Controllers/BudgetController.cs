@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using BudgetFinal.Models;
+using Microsoft.EntityFrameworkCore;
 
 
 
@@ -50,11 +51,12 @@ public class BudgetController : Controller
     {
         if (ModelState.IsValid)
         {
+            
             _context.Transactions.Add(transaction);
             _context.SaveChanges();
             return RedirectToAction(nameof(Index));
         }
-        return View(transaction);
+        return RedirectToAction("Index");
     }
 
 
@@ -101,5 +103,25 @@ public IActionResult DeleteTransaction(int id)
 
     return RedirectToAction("Index");
 }
+
+
+//Category filtering actions 
+//  public IActionResult TransactionsByCategory(int categoryId)
+//     {
+//         var category = _context.Categories.Include(c => c.Transactions)
+//                                           .FirstOrDefault(c => c.Id == categoryId);
+//         if (category == null)
+//         {
+//             return NotFound();
+//         }
+
+//         var viewModel = new BudgetViewModel
+//         {
+//             Category = category,
+//             Transactions = category.Transactions.ToList()
+//         };
+
+//         return View(viewModel);
+//     }
 
 }

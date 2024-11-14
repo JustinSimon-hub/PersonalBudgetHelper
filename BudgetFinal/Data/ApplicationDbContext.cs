@@ -11,7 +11,7 @@ using BudgetFinal.Models;
     {
     }
 
-    public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<BudgetFinal.Models.Transaction> Transactions { get; set; }
 
        
     }

@@ -2,16 +2,29 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using BudgetFinal.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using BudgetFinal.Services;
 
 
 
 public class BudgetController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly UserManager<IdentityUser> _userManager;
+    private readonly IReportService _reportService;
 
-    public BudgetController(ApplicationDbContext context)
+ public BudgetController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IReportService reportService)    
     {
-        _context = context;
+        _context = context;  
+        _userManager = userManager;
+        _reportService = reportService;
+    }
+
+    // Private helper method to get the current user's ID
+    private async Task<string> GetCurrentUserId()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        return user?.Id;
     }
 
     public IActionResult Index()
@@ -110,12 +123,12 @@ public async Task<ReportViewModel> GetMonthlyReport(int userId, int month, int y
     var report = new ReportViewModel();
     //Get income and expenses for the specified month and year
     report.TotalIncome = await _context.Transactions
-        .Where(t => t.UserId == userId && t.TransactionType == "Income" &&
+        .Where(t => t.UserId == userId.ToString() && t.TransactionType == "Income" &&
                     t.Date.Month == month && t.Date.Year == year)
         .SumAsync(t => t.Amount);
 
     report.TotalExpenses = await _context.Transactions
-        .Where(t => t.UserId == userId && t.TransactionType == "Expense" &&
+        .Where(t => t.UserId == userId.ToString() && t.TransactionType == "Expense" &&
                     t.Date.Month == month && t.Date.Year == year)
         .SumAsync(t => t.Amount);
 
@@ -123,7 +136,7 @@ public async Task<ReportViewModel> GetMonthlyReport(int userId, int month, int y
 
     // Breakdown by Category
     report.CategoryBreakdown = await _context.Transactions
-        .Where(t => t.UserId == userId && t.Date.Month == month && t.Date.Year == year)
+        .Where(t => t.UserId == userId.ToString() && t.Date.Month == month && t.Date.Year == year)
         .GroupBy(t => t.Category)
         .Select(g => new CategorySummary
         {
@@ -137,25 +150,33 @@ public async Task<ReportViewModel> GetMonthlyReport(int userId, int month, int y
     
 
 [HttpGet]
+// In your BudgetController.cs
+[HttpGet]
 public async Task<IActionResult> GenerateReport(string reportType, int month = 0, int year = 0)
 {
-    var userId = GetCurrentUserId(); // Assume a method to get the logged-in user's ID
-    ReportViewModel report = null;
+    var userId = await GetCurrentUserId(); // Assuming this returns the logged-in user's ID
+    ReportViewModel reportViewModel = new ReportViewModel(); // Or you can use ReportViewModel if you're focusing on reports
 
     if (reportType == "Monthly" && month > 0 && year > 0)
     {
-        report = await _reportService.GetMonthlyReport(userId, month, year);
+        reportViewModel.ReportTitle = $"Monthly Report for {month}/{year}";
+        reportViewModel.TotalIncome = await _reportService.GetTotalIncome(userId, month, year);
+        reportViewModel.TotalExpenses = await _reportService.GetTotalExpenses(userId, month, year);
     }
     else if (reportType == "Quarterly" && year > 0)
     {
-        report = await _reportService.GetQuarterlyReport(userId, year);
+        reportViewModel.ReportTitle = $"Quarterly Report for {year}";
+        reportViewModel.TotalIncome = await _reportService.GetTotalIncomeForQuarter(userId, year);
+        reportViewModel.TotalExpenses = await _reportService.GetTotalExpensesForQuarter(userId, year);
     }
     else if (reportType == "Yearly" && year > 0)
     {
-        report = await _reportService.GetYearlyReport(userId, year);
+        reportViewModel.ReportTitle = $"Yearly Report for {year}";
+        reportViewModel.TotalIncome = await _reportService.GetTotalIncomeForYear(userId, year);
+        reportViewModel.TotalExpenses = await _reportService.GetTotalExpensesForYear(userId, year);
     }
 
-    return View("Report", report);
+    return View("Report", reportViewModel); // Use your report view to display this data
 }
 
 
@@ -163,23 +184,8 @@ public async Task<IActionResult> GenerateReport(string reportType, int month = 0
 
 
 
-//Category filtering actions 
-//  public IActionResult TransactionsByCategory(int categoryId)
-//     {
-//         var category = _context.Categories.Include(c => c.Transactions)
-//                                           .FirstOrDefault(c => c.Id == categoryId);
-//         if (category == null)
-//         {
-//             return NotFound();
-//         }
 
-//         var viewModel = new BudgetViewModel
-//         {
-//             Category = category,
-//             Transactions = category.Transactions.ToList()
-//         };
 
-//         return View(viewModel);
-//     }
+
 
 }

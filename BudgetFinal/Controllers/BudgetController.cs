@@ -59,18 +59,35 @@ public class BudgetController : Controller
 }
 
 
-    [HttpPost]
-    public IActionResult AddTransaction(Transaction transaction)
+   [HttpPost]
+public async Task<IActionResult> AddTransaction(Transaction transaction)
+{
+    if (ModelState.IsValid)
     {
-        if (ModelState.IsValid)
-        {
-            
-            _context.Transactions.Add(transaction);
-            _context.SaveChanges();
-            return RedirectToAction(nameof(Index));
-        }
-        return RedirectToAction("Index");
+        // Get the current user's ID and assign it to the transaction
+        var userId = await GetCurrentUserId();
+        transaction.UserId = userId;
+
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index));
     }
+
+    // Log ModelState errors for debugging
+    Console.WriteLine("ModelState is invalid:");
+    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+    {
+        Console.WriteLine($" - {error.ErrorMessage}");
+    }
+
+    return RedirectToAction(nameof(Index));
+}
+
+
+
+
+
 
 
         //Update actions requires both a get and post method

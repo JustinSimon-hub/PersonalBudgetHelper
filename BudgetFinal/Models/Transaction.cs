@@ -2,17 +2,27 @@ using System;
 using System.ComponentModel.DataAnnotations;
 namespace BudgetFinal.Models{
 public class Transaction
-    {
-        public int Id { get; set; }
-        [Required]
-        public string Description { get; set; }
-        public decimal Amount { get; set; }
-        public DateTime Date { get; set; }
+{
+    public int Id { get; set; }
 
-        //New properties for filtering transactions
-        public string UserId { get; set; } // To link each transaction to a specific user
-        public string TransactionType { get; set; } // e.g., "Income" or "Expense"
-        public string Category { get; set; } // Optional, for categorizing transactions
+    [Required]
+    public string UserId { get; set; }
 
-    }
+    [Required]
+    public string Description { get; set; }
+
+    [Required]
+    [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than zero.")]
+    public decimal Amount { get; set; }
+
+    [Required]
+    public DateTime Date { get; set; }
+
+    [Required]
+    public string Category { get; set; }
+
+    [Required]
+    public string TransactionType { get; set; }
+}
+
 }

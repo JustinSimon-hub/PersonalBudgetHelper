@@ -5,8 +5,8 @@ public class Transaction
 {
     public int Id { get; set; }
 
-    [Required]
-    public string UserId { get; set; }
+    //UserId is optional for now
+    public string? UserId { get; set; }
 
     [Required]
     public string Description { get; set; }

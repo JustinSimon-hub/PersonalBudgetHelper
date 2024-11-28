@@ -47,16 +47,13 @@
         <input asp-for="NewTransaction.Date" type="date" class="form-control" />
         <span asp-validation-for="NewTransaction.Date" class="text-danger"></span>
     </div>
-    <div class="form-group">
-        <label asp-for="NewTransaction.Category"></label>
-        <select asp-for="NewTransaction.Category" class="form-control">
-            <option value="">Select Category</option>
-            <option value="Food">Food</option>
-            <option value="Transport">Transport</option>
-            <option value="Rent">Rent</option>
-        </select>
-        <span asp-validation-for="NewTransaction.Category" class="text-danger"></span>
-    </div>
+    
+   <div class="form-group">
+    <label asp-for="NewTransaction.Category"></label>
+    <input asp-for="NewTransaction.Category" class="form-control" />
+    <span asp-validation-for="NewTransaction.Category" class="text-danger"></span>
+</div>
+
     <div class="form-group">
         <label asp-for="NewTransaction.TransactionType"></label>
         <select asp-for="NewTransaction.TransactionType" class="form-control">

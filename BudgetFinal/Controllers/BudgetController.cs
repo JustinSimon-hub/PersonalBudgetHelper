@@ -27,62 +27,84 @@ public class BudgetController : Controller
         return user?.Id;
     }
 
-    public IActionResult Index()
+   private decimal CalculateTotalIncome()
 {
-    // Fetch all transactions from the database
+    // Get all transactions from the database
     var transactions = _context.Transactions.ToList();
     
-    // Calculate total income and expenses
-    var totalIncome = transactions.Where(t => t.Amount > 0).Sum(t => t.Amount);
-    var totalExpenses = transactions.Where(t => t.Amount < 0).Sum(t => t.Amount);
-    var balance = totalIncome + totalExpenses;
-
-    // Create a list of view models for displaying transactions with type labels
-    var transactionViewModels = transactions.Select(t => new Transaction
-    {
-        Id = t.Id,
-        Description = t.Description,
-        Amount = t.Amount,
-        Date = t.Date
-    }).ToList();
-
-    // Prepare the view model with the transactions and totals
-    var viewModel = new BudgetViewModel
-    {
-        Transactions = transactionViewModels, // Refactored to use TransactionViewModel list
-        TotalIncome = totalIncome,
-        TotalExpenses = totalExpenses,
-        Balance = balance
-    };
-
-    return View(viewModel);
+    // Sum the amounts where the transaction type is Income
+    return transactions.Where(t => t.TransactionType == "Income").Sum(t => (decimal)t.Amount);
 }
 
-
-   [HttpPost]
-public async Task<IActionResult> AddTransaction(Transaction transaction)
+private decimal CalculateTotalExpenses()
 {
-    if (ModelState.IsValid)
-    {
-        // Get the current user's ID and assign it to the transaction
-        var userId = await GetCurrentUserId();
-        transaction.UserId = userId;
-
-        _context.Transactions.Add(transaction);
-        await _context.SaveChangesAsync();
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    // Log ModelState errors for debugging
-    Console.WriteLine("ModelState is invalid:");
-    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-    {
-        Console.WriteLine($" - {error.ErrorMessage}");
-    }
-
-    return RedirectToAction(nameof(Index));
+    // Get all transactions from the database
+    var transactions = _context.Transactions.ToList();
+    
+    // Sum the amounts where the transaction type is Expense
+    return transactions.Where(t => t.TransactionType == "Expense").Sum(t => (decimal)t.Amount);
 }
+
+private decimal CalculateBalance()
+{
+    // Get all transactions from the database
+    var transactions = _context.Transactions.ToList();
+    
+    // Calculate the balance as Total Income - Total Expenses
+    return CalculateTotalIncome() - CalculateTotalExpenses();
+}
+
+
+    // Index action to load the dashboard view
+    public IActionResult Index()
+    {
+        var model = new BudgetViewModel
+        {
+            TotalIncome = CalculateTotalIncome(),
+            TotalExpenses = CalculateTotalExpenses(),
+            Balance = CalculateBalance(),
+            Transactions = _context.Transactions.ToList(),
+            NewTransaction = new Transaction() // Initialize NewTransaction for form binding
+        };
+
+        return View(model);
+    }
+
+
+
+[HttpPost]
+public async Task<IActionResult> AddTransaction(BudgetViewModel model)
+{
+    if (!ModelState.IsValid)
+    {
+        // Log ModelState errors for debugging
+        Console.WriteLine("ModelState is invalid:");
+        foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+        {
+            Console.WriteLine($" - {error.ErrorMessage}");
+        }
+        return View(model); // Ensure you return the same model to display errors in the view
+    }
+
+    var transaction = model.NewTransaction;
+
+    // If UserId is required by your database schema, handle it conditionally
+    if (User.Identity.IsAuthenticated)
+    {
+        transaction.UserId = await GetCurrentUserId();
+    }
+    else
+    {
+        transaction.UserId ??= "Anonymous"; // Optional value for non-authenticated users
+    }
+
+    // Add the transaction and save changes
+    _context.Transactions.Add(transaction);
+    await _context.SaveChangesAsync();
+
+    return RedirectToAction("Index");
+}
+
 
 
 

@@ -98,10 +98,17 @@ public async Task<IActionResult> AddTransaction(BudgetViewModel model)
     {
         transaction.TransactionType = "Income";
     }
-    else
+    else if (transaction.Amount < 0)
     {
         transaction.TransactionType = "Expense";
     }
+    else
+    {
+        ModelState.AddModelError("NewTransaction.Amount", "Amount must not be zero.");
+        return View("Index", model);
+    }
+
+
 
     // Handle UserId (if User is authenticated, assign their ID, else assign "Anonymous")
     if (User.Identity.IsAuthenticated)

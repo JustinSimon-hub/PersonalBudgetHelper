@@ -47,22 +47,13 @@
         <input asp-for="NewTransaction.Date" type="date" class="form-control" />
         <span asp-validation-for="NewTransaction.Date" class="text-danger"></span>
     </div>
-    
    <div class="form-group">
     <label asp-for="NewTransaction.Category"></label>
     <input asp-for="NewTransaction.Category" class="form-control" />
     <span asp-validation-for="NewTransaction.Category" class="text-danger"></span>
 </div>
 
-    <div class="form-group">
-        <label asp-for="NewTransaction.TransactionType"></label>
-        <select asp-for="NewTransaction.TransactionType" class="form-control">
-            <option value="">Select Type</option>
-            <option value="Income">Income</option>
-            <option value="Expense">Expense</option>
-        </select>
-        <span asp-validation-for="NewTransaction.TransactionType" class="text-danger"></span>
-    </div>
+    
     <button type="submit" class="btn btn-primary">Add Transaction</button>
 </form>
 

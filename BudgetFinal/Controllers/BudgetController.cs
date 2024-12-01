@@ -21,11 +21,12 @@ public class BudgetController : Controller
     }
 
     // Private helper method to get the current user's ID
-    private async Task<string> GetCurrentUserId()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        return user?.Id;
-    }
+   private async Task<string> GetCurrentUserId()
+{
+    var user = await _userManager.GetUserAsync(User); // _userManager is assumed to be injected via constructor
+    return user?.Id ?? string.Empty; // Return user ID or an empty string if no user is found
+}
+
 
    private decimal CalculateTotalIncome()
 {
@@ -71,39 +72,56 @@ private decimal CalculateBalance()
     }
 
 
-
+//Debugging neccesary to remove modelstate errors when calling thios action
+ 
 [HttpPost]
 public async Task<IActionResult> AddTransaction(BudgetViewModel model)
 {
+    // Check if the ModelState is valid
     if (!ModelState.IsValid)
     {
-        // Log ModelState errors for debugging
+        // Log ModelState errors for debugging purposes
         Console.WriteLine("ModelState is invalid:");
         foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
         {
             Console.WriteLine($" - {error.ErrorMessage}");
         }
-        return View(model); // Ensure you return the same model to display errors in the view
+        // Return the Index view with the model to show validation errors
+        return View("Index", model); 
     }
 
+    // Retrieve the new transaction from the model
     var transaction = model.NewTransaction;
 
-    // If UserId is required by your database schema, handle it conditionally
-    if (User.Identity.IsAuthenticated)
+    // Set TransactionType based on Amount (Income if positive, Expense if negative)
+    if (transaction.Amount >= 0)
     {
-        transaction.UserId = await GetCurrentUserId();
+        transaction.TransactionType = "Income";
     }
     else
     {
-        transaction.UserId ??= "Anonymous"; // Optional value for non-authenticated users
+        transaction.TransactionType = "Expense";
     }
 
-    // Add the transaction and save changes
+    // Handle UserId (if User is authenticated, assign their ID, else assign "Anonymous")
+    if (User.Identity.IsAuthenticated)
+    {
+        transaction.UserId = await GetCurrentUserId(); // Ensure this method returns the correct user ID
+    }
+    else
+    {
+        transaction.UserId ??= "Anonymous"; // For non-authenticated users, set the UserId to "Anonymous"
+    }
+
+    // Add the transaction to the context and save changes
     _context.Transactions.Add(transaction);
     await _context.SaveChangesAsync();
 
+    // Redirect to the Index page after successfully adding the transaction
     return RedirectToAction("Index");
 }
+
+
 
 
 
@@ -116,32 +134,57 @@ public async Task<IActionResult> AddTransaction(BudgetViewModel model)
         //one for retrieving the obj and one for submitting the changes to the server 
     //Loads the transaction to be updated/view
     [HttpGet]   
-    public IActionResult UpdateTransaction(int id)
+public IActionResult UpdateTransaction(int id)
+{
+    var transaction = _context.Transactions.Find(id);
+    if (transaction == null)
     {
-        var transaction = _context.Transactions.Find(id);
-        if(transaction == null)
+        return NotFound();
+    }
+
+    var model = new BudgetViewModel
+    {
+        NewTransaction = transaction // Bind the existing transaction to the view
+    };
+
+    return View(model);
+}
+
+    //Adding methods to update and delete transactions
+    [HttpPost]
+public IActionResult UpdateTransaction(BudgetViewModel model)
+{
+    if (ModelState.IsValid)
+    {
+        var transaction = _context.Transactions.Find(model.NewTransaction.Id);
+        if (transaction == null)
         {
             return NotFound();
         }
-        return View(transaction);
+
+        // Update properties
+        transaction.Description = model.NewTransaction.Description;
+        transaction.Amount = model.NewTransaction.Amount;
+        transaction.Date = model.NewTransaction.Date;
+        transaction.Category = model.NewTransaction.Category;
+
+        // Automatically set the TransactionType based on Amount
+        transaction.TransactionType = model.NewTransaction.Amount >= 0 ? "Income" : "Expense";
+
+        // Save the updated transaction
+        _context.Update(transaction);
+        _context.SaveChanges();
+
+        return RedirectToAction("Index");
     }
-    //Adding methods to update and delete transactions
-    [HttpPost]
-    public IActionResult UpdateTransaction(Transaction transaction)
-    {
-        if (ModelState.IsValid)
-        {
-            _context.Transactions.Update(transaction);
-            _context.SaveChanges();
-            return RedirectToAction(nameof(Index));
-        }
-        return View(transaction);
-    }
+
+    // If ModelState is not valid, return the same model to the view
+    return View(model);
+}
 
 
 
-
-   [HttpPost]
+[HttpPost]
 public IActionResult DeleteTransaction(int id)
 {
     var transaction = _context.Transactions.Find(id);
@@ -188,7 +231,7 @@ public async Task<ReportViewModel> GetMonthlyReport(int userId, int month, int y
 
     
 
-[HttpGet]
+
 // In your BudgetController.cs
 [HttpGet]
 public async Task<IActionResult> GenerateReport(string reportType, int month = 0, int year = 0)

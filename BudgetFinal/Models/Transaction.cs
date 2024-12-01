@@ -21,7 +21,7 @@ public class Transaction
     [Required]
     public string Category { get; set; }
 
-    [Required]
+   
     public string TransactionType { get; set; }
 }
 

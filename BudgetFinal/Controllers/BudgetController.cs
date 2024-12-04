@@ -12,11 +12,14 @@ public class BudgetController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IReportService _reportService;
+    private readonly ILogger<BudgetController> _logger;
 
- public BudgetController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IReportService reportService)    
+
+ public BudgetController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IReportService reportService, ILogger<BudgetController> logger)    
     {
         _context = context;  
         _userManager = userManager;
+        _logger = logger;
         _reportService = reportService;
     }
 
@@ -94,7 +97,7 @@ public async Task<IActionResult> AddTransaction(BudgetViewModel model)
     var transaction = model.NewTransaction;
 
     // Set TransactionType based on Amount (Income if positive, Expense if negative)
-    if (transaction.Amount >= 0)
+    if (transaction.Amount > 0)
     {
         transaction.TransactionType = "Income";
     }
@@ -141,10 +144,10 @@ public async Task<IActionResult> AddTransaction(BudgetViewModel model)
 
 
 
-    //Update actions requires both a get and post method
-    //one for retrieving the obj and one for submitting the changes to the server 
-    //Loads the transaction to be updated/view
-    [HttpGet]   
+//Update actions requires both a get and post method
+//one for retrieving the obj and one for submitting the changes to the server 
+//Loads the transaction to be updated/view
+[HttpGet]   
 public IActionResult UpdateTransaction(int id)
 {
     var transaction = _context.Transactions.Find(id);
@@ -161,10 +164,22 @@ public IActionResult UpdateTransaction(int id)
     return View(model);
 }
 
-    //Adding methods to update and delete transactions
-    [HttpPost]
+//Post method for updating the transaction after changes have been made
+[HttpPost]
 public IActionResult UpdateTransaction(BudgetViewModel model)
 {
+    //This method checks if the model is valid and if not logs the errors to the console
+     if (!ModelState.IsValid)
+    {
+        // Log the validation errors to the console
+        var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+        Console.WriteLine("Model Validation Failed: " + errors);
+        
+        // Return the view with the model in case of validation failure
+        return View(model);
+    }
+
+
     if (ModelState.IsValid)
     {
         var transaction = _context.Transactions.Find(model.NewTransaction.Id);
@@ -173,6 +188,8 @@ public IActionResult UpdateTransaction(BudgetViewModel model)
             return NotFound();
         }
 
+        //Log for debugging
+        Console.WriteLine($"Updating transaction with ID: {model.NewTransaction.Id}");
         // Update properties
         transaction.Description = model.NewTransaction.Description;
         transaction.Amount = model.NewTransaction.Amount;

@@ -102,6 +102,10 @@ public async Task<IActionResult> AddTransaction(BudgetViewModel model)
     {
         transaction.TransactionType = "Expense";
     }
+    else if(transaction.Amount == 0)
+    {
+        transaction.TransactionType = "Zero";
+    }
     else
     {
         ModelState.AddModelError("NewTransaction.Amount", "Amount must not be zero.");
@@ -137,8 +141,8 @@ public async Task<IActionResult> AddTransaction(BudgetViewModel model)
 
 
 
-        //Update actions requires both a get and post method
-        //one for retrieving the obj and one for submitting the changes to the server 
+    //Update actions requires both a get and post method
+    //one for retrieving the obj and one for submitting the changes to the server 
     //Loads the transaction to be updated/view
     [HttpGet]   
 public IActionResult UpdateTransaction(int id)

@@ -80,6 +80,10 @@ private decimal CalculateBalance()
 [HttpPost]
 public async Task<IActionResult> AddTransaction(BudgetViewModel model)
 {
+    //Logs incoming model to check if its populated correctly
+ _logger.LogInformation("UpdateTransaction called with transaction ID: {Id}, Amount: {Amount}, Category: {Category}", 
+        model.NewTransaction.Id, model.NewTransaction.Amount, model.NewTransaction.Category);
+
     // Check if the ModelState is valid
     if (!ModelState.IsValid)
     {
@@ -168,49 +172,58 @@ public IActionResult UpdateTransaction(int id)
 [HttpPost]
 public IActionResult UpdateTransaction(BudgetViewModel model)
 {
-    //This method checks if the model is valid and if not logs the errors to the console
-     if (!ModelState.IsValid)
+    // Check if the ModelState is valid
+    if (!ModelState.IsValid)
     {
-        // Log the validation errors to the console
-        var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-        Console.WriteLine("Model Validation Failed: " + errors);
-        
-        // Return the view with the model in case of validation failure
+        // Log ModelState errors for debugging purposes
+        Console.WriteLine("ModelState is invalid:");
+        foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+        {
+            Console.WriteLine($" - {error.ErrorMessage}");
+        }
+        // Return the UpdateTransaction view with the model to show validation errors
         return View(model);
     }
 
+    // Retrieve the updated transaction from the model
+    var transaction = model.NewTransaction;
 
-    if (ModelState.IsValid)
+    // Set TransactionType based on Amount (Income if positive, Expense if negative)
+    if (transaction.Amount > 0)
     {
-        var transaction = _context.Transactions.Find(model.NewTransaction.Id);
-        if (transaction == null)
-        {
-            return NotFound();
-        }
-
-        //Log for debugging
-        Console.WriteLine($"Updating transaction with ID: {model.NewTransaction.Id}");
-        // Update properties
-        transaction.Description = model.NewTransaction.Description;
-        transaction.Amount = model.NewTransaction.Amount;
-        transaction.Date = model.NewTransaction.Date;
-        transaction.Category = model.NewTransaction.Category;
-
-        // Automatically set the TransactionType based on Amount
-        transaction.TransactionType = model.NewTransaction.Amount >= 0 ? "Income" : "Expense";
-
-        // Save the updated transaction
-        _context.Update(transaction);
-        _context.SaveChanges();
-
-        return RedirectToAction("Index");
+        transaction.TransactionType = "Income";
+    }
+    else if (transaction.Amount < 0)
+    {
+        transaction.TransactionType = "Expense";
+    }
+    else if(transaction.Amount == 0)
+    {
+        transaction.TransactionType = "Zero";
+    }
+    else
+    {
+        ModelState.AddModelError("NewTransaction.Amount", "Amount must not be zero.");
+        return View(model);
     }
 
-    // If ModelState is not valid, return the same model to the view
-    return View(model);
+    // Handle UserId (if User is authenticated, assign their ID, else assign "Anonymous")
+    if (User.Identity.IsAuthenticated)
+    {
+        transaction.UserId = GetCurrentUserId().Result; // Ensure this method returns the correct user ID
+    }
+    else
+    {
+        transaction.UserId ??= "Anonymous"; // For non-authenticated users, set the UserId to "Anonymous"
+    }
+
+    // Update the transaction in the context and save changes
+    _context.Transactions.Update(transaction);
+    _context.SaveChanges();
+
+    // Redirect to the Index page after successfully updating the transaction
+    return RedirectToAction("Index");
 }
-
-
 
 [HttpPost]
 public IActionResult DeleteTransaction(int id)

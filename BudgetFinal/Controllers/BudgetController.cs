@@ -154,17 +154,21 @@ public async Task<IActionResult> AddTransaction(BudgetViewModel model)
 [HttpGet]   
 public IActionResult UpdateTransaction(int id)
 {
-    var transaction = _context.Transactions.Find(id);
-    if (transaction == null)
+    // Attempt to find the existing transaction in the database
+    var existingTransaction = _context.Transactions.Find(id);
+    if (existingTransaction == null)
     {
-        return NotFound();
+        // If no matching transaction is found, return a NotFound result
+        return NotFound($"Transaction with ID {id} not found.");
     }
 
+    // Create a new BudgetViewModel with the existing transaction
     var model = new BudgetViewModel
     {
-        NewTransaction = transaction // Bind the existing transaction to the view
+        NewTransaction = existingTransaction
     };
 
+    // Return the UpdateTransaction view with the model
     return View(model);
 }
 
@@ -185,21 +189,28 @@ public IActionResult UpdateTransaction(BudgetViewModel model)
         return View(model);
     }
 
-    // Retrieve the updated transaction from the model
-    var transaction = model.NewTransaction;
+    // Attempt to find the existing transaction in the database
+    var existingTransaction = _context.Transactions.Find(model.NewTransaction.Id);
+    if (existingTransaction == null)
+    {
+        // If no matching transaction is found, return a NotFound result
+        return NotFound($"Transaction with ID {model.NewTransaction.Id} not found.");
+    }
+
+    // Update the existing transaction's properties
+    existingTransaction.Description = model.NewTransaction.Description;
+    existingTransaction.Amount = model.NewTransaction.Amount;
+    existingTransaction.Date = model.NewTransaction.Date;
+    existingTransaction.Category = model.NewTransaction.Category;
 
     // Set TransactionType based on Amount (Income if positive, Expense if negative)
-    if (transaction.Amount > 0)
+    if (existingTransaction.Amount > 0)
     {
-        transaction.TransactionType = "Income";
+        existingTransaction.TransactionType = "Income";
     }
-    else if (transaction.Amount < 0)
+    else if (existingTransaction.Amount < 0)
     {
-        transaction.TransactionType = "Expense";
-    }
-    else if(transaction.Amount == 0)
-    {
-        transaction.TransactionType = "Zero";
+        existingTransaction.TransactionType = "Expense";
     }
     else
     {
@@ -210,20 +221,20 @@ public IActionResult UpdateTransaction(BudgetViewModel model)
     // Handle UserId (if User is authenticated, assign their ID, else assign "Anonymous")
     if (User.Identity.IsAuthenticated)
     {
-        transaction.UserId = GetCurrentUserId().Result; // Ensure this method returns the correct user ID
+        existingTransaction.UserId = GetCurrentUserId().Result; // Ensure this method returns the correct user ID
     }
     else
     {
-        transaction.UserId ??= "Anonymous"; // For non-authenticated users, set the UserId to "Anonymous"
+        existingTransaction.UserId ??= "Anonymous"; // For non-authenticated users, set the UserId to "Anonymous"
     }
 
-    // Update the transaction in the context and save changes
-    _context.Transactions.Update(transaction);
+    // Save changes to the database
     _context.SaveChanges();
 
     // Redirect to the Index page after successfully updating the transaction
     return RedirectToAction("Index");
 }
+
 
 [HttpPost]
 public IActionResult DeleteTransaction(int id)

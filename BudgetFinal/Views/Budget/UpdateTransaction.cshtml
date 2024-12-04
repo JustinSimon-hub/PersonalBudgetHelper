@@ -3,6 +3,7 @@
 <h2>Update Transaction</h2>
 
 <form asp-controller="Budget" asp-action="UpdateTransaction" asp-route-id="@Model.NewTransaction.Id" method="post">
+     <input type="hidden" asp-for="NewTransaction.Id" />
     <div class="form-group">
         <label>Description</label>
         <input type="text" asp-for="NewTransaction.Description" class="form-control" />

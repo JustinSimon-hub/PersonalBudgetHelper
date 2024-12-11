@@ -4,8 +4,8 @@ using BudgetFinal.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using BudgetFinal.Services;
-
-
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 public class BudgetController : Controller
 {
@@ -14,50 +14,43 @@ public class BudgetController : Controller
     private readonly IReportService _reportService;
     private readonly ILogger<BudgetController> _logger;
 
-
- public BudgetController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IReportService reportService, ILogger<BudgetController> logger)    
+    public BudgetController(ApplicationDbContext context, 
+                            UserManager<IdentityUser> userManager, 
+                            IReportService reportService, 
+                            ILogger<BudgetController> logger)    
     {
         _context = context;  
         _userManager = userManager;
-        _logger = logger;
         _reportService = reportService;
+        _logger = logger;
     }
 
     // Private helper method to get the current user's ID
-   private async Task<string> GetCurrentUserId()
-{
-    var user = await _userManager.GetUserAsync(User); // _userManager is assumed to be injected via constructor
-    return user?.Id ?? string.Empty; // Return user ID or an empty string if no user is found
-}
+    private async Task<string> GetCurrentUserId()
+    {
+        var user = await _userManager.GetUserAsync(User); // Get logged-in user
+        return user?.Id ?? string.Empty; // Return user ID or an empty string if not found
+    }
 
+    // Helper method to calculate total income
+    private decimal CalculateTotalIncome()
+    {
+        var transactions = _context.Transactions.ToList();
+        return transactions.Where(t => t.TransactionType == "Income").Sum(t => (decimal)t.Amount);
+    }
 
-   private decimal CalculateTotalIncome()
-{
-    // Get all transactions from the database
-    var transactions = _context.Transactions.ToList();
-    
-    // Sum the amounts where the transaction type is Income
-    return transactions.Where(t => t.TransactionType == "Income").Sum(t => (decimal)t.Amount);
-}
+    // Helper method to calculate total expenses
+    private decimal CalculateTotalExpenses()
+    {
+        var transactions = _context.Transactions.ToList();
+        return transactions.Where(t => t.TransactionType == "Expense").Sum(t => (decimal)t.Amount);
+    }
 
-private decimal CalculateTotalExpenses()
-{
-    // Get all transactions from the database
-    var transactions = _context.Transactions.ToList();
-    
-    // Sum the amounts where the transaction type is Expense
-    return transactions.Where(t => t.TransactionType == "Expense").Sum(t => (decimal)t.Amount);
-}
-
-private decimal CalculateBalance()
-{
-    // Get all transactions from the database
-    var transactions = _context.Transactions.ToList();
-    
-    // Calculate the balance as Total Income - Total Expenses
-    return CalculateTotalIncome() - CalculateTotalExpenses();
-}
-
+    // Helper method to calculate balance (Income - Expenses)
+    private decimal CalculateBalance()
+    {
+        return CalculateTotalIncome() - CalculateTotalExpenses();
+    }
 
     // Index action to load the dashboard view
     public IActionResult Index()
@@ -74,279 +67,219 @@ private decimal CalculateBalance()
         return View(model);
     }
 
-
-//Debugging neccesary to remove modelstate errors when calling thios action
- 
-[HttpPost]
-public async Task<IActionResult> AddTransaction(BudgetViewModel model)
-{
-    //Logs incoming model to check if its populated correctly
- _logger.LogInformation("UpdateTransaction called with transaction ID: {Id}, Amount: {Amount}, Category: {Category}", 
-        model.NewTransaction.Id, model.NewTransaction.Amount, model.NewTransaction.Category);
-
-    // Check if the ModelState is valid
-    if (!ModelState.IsValid)
+    // POST: AddTransaction
+    [HttpPost]
+    public async Task<IActionResult> AddTransaction(BudgetViewModel model)
     {
-        // Log ModelState errors for debugging purposes
-        Console.WriteLine("ModelState is invalid:");
-        foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+        // Log incoming model to debug issues
+        _logger.LogInformation("AddTransaction called with transaction ID: {Id}, Amount: {Amount}, Category: {Category}", 
+            model.NewTransaction.Id, model.NewTransaction.Amount, model.NewTransaction.Category);
+
+        // Check ModelState validity
+        if (!ModelState.IsValid)
         {
-            Console.WriteLine($" - {error.ErrorMessage}");
+            // Log errors if any
+            Console.WriteLine("ModelState is invalid:");
+            foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+            {
+                Console.WriteLine($" - {error.ErrorMessage}");
+            }
+            return View("Index", model); // Return to Index if ModelState is invalid
         }
-        // Return the Index view with the model to show validation errors
-        return View("Index", model); 
-    }
 
-    // Retrieve the new transaction from the model
-    var transaction = model.NewTransaction;
-
-    // Set TransactionType based on Amount (Income if positive, Expense if negative)
-    if (transaction.Amount > 0)
-    {
-        transaction.TransactionType = "Income";
-    }
-    else if (transaction.Amount < 0)
-    {
-        transaction.TransactionType = "Expense";
-    }
-    else if(transaction.Amount == 0)
-    {
-        transaction.TransactionType = "Zero";
-    }
-    else
-    {
-        ModelState.AddModelError("NewTransaction.Amount", "Amount must not be zero.");
-        return View("Index", model);
-    }
-
-
-
-    // Handle UserId (if User is authenticated, assign their ID, else assign "Anonymous")
-    if (User.Identity.IsAuthenticated)
-    {
-        transaction.UserId = await GetCurrentUserId(); // Ensure this method returns the correct user ID
-    }
-    else
-    {
-        transaction.UserId ??= "Anonymous"; // For non-authenticated users, set the UserId to "Anonymous"
-    }
-
-    // Add the transaction to the context and save changes
-    _context.Transactions.Add(transaction);
-    await _context.SaveChangesAsync();
-
-    // Redirect to the Index page after successfully adding the transaction
-    return RedirectToAction("Index");
-}
-
-
-
-
-
-
-
-
-
-
-//Update actions requires both a get and post method
-//one for retrieving the obj and one for submitting the changes to the server 
-//Loads the transaction to be updated/view
-[HttpGet]   
-public IActionResult UpdateTransaction(int id)
-{
-    // Attempt to find the existing transaction in the database
-    var existingTransaction = _context.Transactions.Find(id);
-    if (existingTransaction == null)
-    {
-        // If no matching transaction is found, return a NotFound result
-        return NotFound($"Transaction with ID {id} not found.");
-    }
-
-    // Create a new BudgetViewModel with the existing transaction
-    var model = new BudgetViewModel
-    {
-        NewTransaction = existingTransaction
-    };
-
-    // Return the UpdateTransaction view with the model
-    return View(model);
-}
-
-//Post method for updating the transaction after changes have been made
-[HttpPost]
-public IActionResult UpdateTransaction(BudgetViewModel model)
-{
-    // Check if the ModelState is valid
-    if (!ModelState.IsValid)
-    {
-        // Log ModelState errors for debugging purposes
-        Console.WriteLine("ModelState is invalid:");
-        foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+        // Retrieve new transaction and set its type based on the amount
+        var transaction = model.NewTransaction;
+        if (transaction.Amount > 0)
         {
-            Console.WriteLine($" - {error.ErrorMessage}");
+            transaction.TransactionType = "Income";
         }
-        // Return the UpdateTransaction view with the model to show validation errors
+        else if (transaction.Amount < 0)
+        {
+            transaction.TransactionType = "Expense";
+        }
+        else
+        {
+            ModelState.AddModelError("NewTransaction.Amount", "Amount must not be zero.");
+            return View("Index", model); // Show error if amount is zero
+        }
+
+        // Handle UserId (authenticated users or "Anonymous")
+        if (User.Identity.IsAuthenticated)
+        {
+            transaction.UserId = await GetCurrentUserId();
+        }
+        else
+        {
+            transaction.UserId ??= "Anonymous"; // For unauthenticated users, set as "Anonymous"
+        }
+
+        // Save the new transaction
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        // Redirect back to Index after adding transaction
+        return RedirectToAction("Index");
+    }
+
+    // GET: UpdateTransaction
+    [HttpGet]   
+    public IActionResult UpdateTransaction(int id)
+    {
+        var existingTransaction = _context.Transactions.Find(id);
+        if (existingTransaction == null)
+        {
+            return NotFound($"Transaction with ID {id} not found.");
+        }
+
+        var model = new BudgetViewModel
+        {
+            NewTransaction = existingTransaction
+        };
+
         return View(model);
     }
 
-    // Attempt to find the existing transaction in the database
-    var existingTransaction = _context.Transactions.Find(model.NewTransaction.Id);
-    if (existingTransaction == null)
+    // POST: UpdateTransaction
+    [HttpPost]
+    public IActionResult UpdateTransaction(BudgetViewModel model)
     {
-        // If no matching transaction is found, return a NotFound result
-        return NotFound($"Transaction with ID {model.NewTransaction.Id} not found.");
-    }
-
-    // Update the existing transaction's properties
-    existingTransaction.Description = model.NewTransaction.Description;
-    existingTransaction.Amount = model.NewTransaction.Amount;
-    existingTransaction.Date = model.NewTransaction.Date;
-    existingTransaction.Category = model.NewTransaction.Category;
-
-    // Set TransactionType based on Amount (Income if positive, Expense if negative)
-    if (existingTransaction.Amount > 0)
-    {
-        existingTransaction.TransactionType = "Income";
-    }
-    else if (existingTransaction.Amount < 0)
-    {
-        existingTransaction.TransactionType = "Expense";
-    }
-    else
-    {
-        ModelState.AddModelError("NewTransaction.Amount", "Amount must not be zero.");
-        return View(model);
-    }
-
-    // Handle UserId (if User is authenticated, assign their ID, else assign "Anonymous")
-    if (User.Identity.IsAuthenticated)
-    {
-        existingTransaction.UserId = GetCurrentUserId().Result; // Ensure this method returns the correct user ID
-    }
-    else
-    {
-        existingTransaction.UserId ??= "Anonymous"; // For non-authenticated users, set the UserId to "Anonymous"
-    }
-
-    // Save changes to the database
-    _context.SaveChanges();
-
-    // Redirect to the Index page after successfully updating the transaction
-    return RedirectToAction("Index");
-}
-
-
-[HttpPost]
-public IActionResult DeleteTransaction(int id)
-{
-    var transaction = _context.Transactions.Find(id);
-    if (transaction == null)
-    {
-        return NotFound();
-    }
-
-    _context.Transactions.Remove(transaction);
-    _context.SaveChanges();
-
-    return RedirectToAction("Index");
-}
-
-//Actions for filtering transactions
-public async Task<ReportViewModel> GetMonthlyReport(int userId, int month, int year)
-{
-    var report = new ReportViewModel();
-    //Get income and expenses for the specified month and year
-    report.TotalIncome = await _context.Transactions
-        .Where(t => t.UserId == userId.ToString() && t.TransactionType == "Income" &&
-                    t.Date.Month == month && t.Date.Year == year)
-        .SumAsync(t => t.Amount);
-
-    report.TotalExpenses = await _context.Transactions
-        .Where(t => t.UserId == userId.ToString() && t.TransactionType == "Expense" &&
-                    t.Date.Month == month && t.Date.Year == year)
-        .SumAsync(t => t.Amount);
-
-    report.Balance = report.TotalIncome - report.TotalExpenses;
-
-    // Breakdown by Category
-    report.CategoryBreakdown = await _context.Transactions
-        .Where(t => t.UserId == userId.ToString() && t.Date.Month == month && t.Date.Year == year)
-        .GroupBy(t => t.Category)
-        .Select(g => new CategorySummary
+        if (!ModelState.IsValid)
         {
-            Category = g.Key,
-            TotalAmount = g.Sum(t => t.Amount)
-        }).ToListAsync();
+            // Log ModelState errors
+            Console.WriteLine("ModelState is invalid:");
+            foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+            {
+                Console.WriteLine($" - {error.ErrorMessage}");
+            }
+            return View(model);
+        }
 
-    return report;
-}
+        var existingTransaction = _context.Transactions.Find(model.NewTransaction.Id);
+        if (existingTransaction == null)
+        {
+            return NotFound($"Transaction with ID {model.NewTransaction.Id} not found.");
+        }
 
+        existingTransaction.Description = model.NewTransaction.Description;
+        existingTransaction.Amount = model.NewTransaction.Amount;
+        existingTransaction.Date = model.NewTransaction.Date;
+        existingTransaction.Category = model.NewTransaction.Category;
 
-public IActionResult FilterTransactions(TransactionFilterViewModel model)
-{
-    // Start with all transactions from the database
-    var transactions = _context.Transactions.AsQueryable();
+        if (existingTransaction.Amount > 0)
+        {
+            existingTransaction.TransactionType = "Income";
+        }
+        else if (existingTransaction.Amount < 0)
+        {
+            existingTransaction.TransactionType = "Expense";
+        }
+        else
+        {
+            ModelState.AddModelError("NewTransaction.Amount", "Amount must not be zero.");
+            return View(model);
+        }
 
-    // Filter by category if provided
-    if (!string.IsNullOrEmpty(model.Category))
-    {
-        transactions = transactions.Where(t => t.Category.Contains(model.Category));
+        if (User.Identity.IsAuthenticated)
+        {
+            existingTransaction.UserId = GetCurrentUserId().Result;
+        }
+        else
+        {
+            existingTransaction.UserId ??= "Anonymous";
+        }
+
+        _context.SaveChanges(); // Save updated transaction
+        return RedirectToAction("Index"); // Redirect to Index after update
     }
 
-    // Filter by date range if provided
-    if (model.StartDate.HasValue)
+    // POST: DeleteTransaction
+    [HttpPost]
+    public IActionResult DeleteTransaction(int id)
     {
-        transactions = transactions.Where(t => t.Date >= model.StartDate.Value);
+        var transaction = _context.Transactions.Find(id);
+        if (transaction == null)
+        {
+            return NotFound();
+        }
+
+        _context.Transactions.Remove(transaction);
+        _context.SaveChanges();
+
+        return RedirectToAction("Index");
     }
 
-    if (model.EndDate.HasValue)
-    {
-        transactions = transactions.Where(t => t.Date <= model.EndDate.Value);
-    }
+    public IActionResult ManageBudget()
+        {
+            // Retrieve budget data
+            var budgetLimit = _context.Budgets.FirstOrDefault(); // Or however you retrieve the budget data
 
-    // Assign the filtered results to the model
-    model.FilteredTransactions = transactions.ToList();
+            if(budgetLimit == null)
+            {
+                budgetLimit = new BudgetLimit(); // Create a new budget limit object if none exists
+            }
+            // Calculate total spending for this month and year
+          var totalSpentThisMonth = _context.Transactions
+            .Where(t => t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
+            .Sum(t => (double)t.Amount);  // Convert to double
 
-    // Return the filtered view
-    return View(model);
-}
+        var totalSpentThisYear = _context.Transactions
+            .Where(t => t.Date.Year == DateTime.Now.Year)
+            .Sum(t => (double)t.Amount);  // Convert to double
 
-    
+            // Pass data to the view
+            ViewBag.TotalSpentThisMonth = totalSpentThisMonth;
+            ViewBag.TotalSpentThisYear = totalSpentThisYear;
 
-
-// In your BudgetController.cs
-[HttpGet]
-public async Task<IActionResult> GenerateReport(string reportType, int month = 0, int year = 0)
-{
-    var userId = await GetCurrentUserId(); // Assuming this returns the logged-in user's ID
-    ReportViewModel reportViewModel = new ReportViewModel(); // Or you can use ReportViewModel if you're focusing on reports
-
-    if (reportType == "Monthly" && month > 0 && year > 0)
-    {
-        reportViewModel.ReportTitle = $"Monthly Report for {month}/{year}";
-        reportViewModel.TotalIncome = await _reportService.GetTotalIncome(userId, month, year);
-        reportViewModel.TotalExpenses = await _reportService.GetTotalExpenses(userId, month, year);
-    }
-    else if (reportType == "Quarterly" && year > 0)
-    {
-        reportViewModel.ReportTitle = $"Quarterly Report for {year}";
-        reportViewModel.TotalIncome = await _reportService.GetTotalIncomeForQuarter(userId, year);
-        reportViewModel.TotalExpenses = await _reportService.GetTotalExpensesForQuarter(userId, year);
-    }
-    else if (reportType == "Yearly" && year > 0)
-    {
-        reportViewModel.ReportTitle = $"Yearly Report for {year}";
-        reportViewModel.TotalIncome = await _reportService.GetTotalIncomeForYear(userId, year);
-        reportViewModel.TotalExpenses = await _reportService.GetTotalExpensesForYear(userId, year);
-    }
-
-    return View("Report", reportViewModel); // Use your report view to display this data
-}
+            return View(budgetLimit); // Pass the budget limit model to the view
+        }
 
 
 
+        [HttpGet]
+        public async Task<IActionResult> CreateBudget()
+            {
+                // Check for an active budget goal
+                var budgetGoal = await _context.BudgetGoals
+                    .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+                    .FirstOrDefaultAsync();
+
+                if (budgetGoal != null)
+                {
+                    // Calculate total expenses for the active budget goal period
+                    var totalExpenses = _context.Transactions
+                        .Where(t => t.TransactionType == "Expense" &&
+                                    t.Date >= budgetGoal.StartDate &&
+                                    t.Date <= budgetGoal.EndDate)
+                        .Sum(t => t.Amount);
+
+                    // Trigger an alert if the budget is exceeded
+                    if (totalExpenses > budgetGoal.LimitAmount)
+                    {
+                        TempData["BudgetAlert"] = "Warning: You have exceeded your budget!";
+                    }
+                }
+
+                return View();
+            }
 
 
+        [HttpPost]
+        public async Task<IActionResult> CreateBudget(BudgetGoal model)
+        {
+            if (ModelState.IsValid)
+            {
+                // Set the user ID for the budget goal
+                model.UserId = await GetCurrentUserId();
+
+                // Add the budget goal to the database
+                _context.BudgetGoals.Add(model);
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction("ManageBudget");
+            }
+
+            return View("ManageBudget", model);
+        }
 
 
 

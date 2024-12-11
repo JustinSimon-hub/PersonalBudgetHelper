@@ -1,6 +1,6 @@
 @model BudgetViewModel
 
-<h2>Budget Overview</h2>
+<h2>Financial Overview</h2>
 
 <div>
     <p>Total Income: @Model.TotalIncome</p>
@@ -56,8 +56,14 @@
     
     <button type="submit" class="btn btn-primary">Add Transaction</button>
 </form>
+<!--Button to filter transactions-->
 
 <a href="@Url.Action("FilterTransactions", "Budget")" class="btn btn-secondary">Filter Transactions</a>
+<!--Button to manage budget BUGGED-->
+<a href="@Url.Action("ManageBudget", "Budget")" class="btn btn-info">Manage Budget</a>
+<!--Button to create budget-->
+
+<a href="@Url.Action("CreateBudget", "Budget")" class="btn btn-primary">Create New Budget</a>
 
 <!-- List of Transactions -->
 <h2>All Transactions</h2>

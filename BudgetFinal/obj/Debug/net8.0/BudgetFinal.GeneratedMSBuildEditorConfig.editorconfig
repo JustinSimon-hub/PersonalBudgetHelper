@@ -58,12 +58,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L0NoYXJ0Vmlldy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/CreateBudget.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L0NyZWF0ZUJ1ZGdldC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/FilterTransactions.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L0ZpbHRlclRyYW5zYWN0aW9ucy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/ManageBudget.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQnVkZ2V0L01hbmFnZUJ1ZGdldC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/justinsimon/Desktop/Completed Projects(Post bootcamp)/Budgeting_PortfolioProject/BudgetFinal/Views/Budget/UpdateTransaction.cshtml]

@@ -68,7 +68,7 @@ public class BudgetController : Controller
     }
 
     // POST: AddTransaction
-    [HttpPost]
+[HttpPost]
 public async Task<IActionResult> AddTransaction(BudgetViewModel model)
 {
     if (ModelState.IsValid)

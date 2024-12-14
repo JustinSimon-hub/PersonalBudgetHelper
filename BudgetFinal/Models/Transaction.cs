@@ -25,7 +25,9 @@ public decimal Amount { get; set; }
       public string? TransactionType { get; set; }
 
 
-      public int BudgetGoalId { get; set; }//Foreign key for BudgetGoal
+    //Made nullable to ensure that the user can create a transaction without a budget goal
+    //and wont throw a null exception error
+      public int? BudgetGoalId { get; set; }//Foreign key for BudgetGoal
 
       public BudgetGoal BudgetGoal { get; set; }
 

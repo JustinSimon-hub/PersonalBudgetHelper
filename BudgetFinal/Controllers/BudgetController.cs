@@ -280,7 +280,11 @@ public async Task<IActionResult> CreateBudget()
             return View("ManageBudget", model);
         }
 
-
+        [HttpGet]
+        public IActionResult CreateBudgetGoal()
+        {
+            return View();
+        }
 
 
 

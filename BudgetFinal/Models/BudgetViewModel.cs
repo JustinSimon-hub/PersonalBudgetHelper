@@ -10,6 +10,7 @@ namespace BudgetFinal.Models
     public decimal Balance { get; set; }
     public List<Transaction> Transactions { get; set; } = new List<Transaction>();
     public Transaction NewTransaction { get; set; } = new Transaction();
+     public BudgetGoal BudgetGoal { get; set; } 
     }
 }
 

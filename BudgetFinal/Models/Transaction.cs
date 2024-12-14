@@ -23,6 +23,12 @@ public decimal Amount { get; set; }
 
    [StringLength(50)] 
       public string? TransactionType { get; set; }
+
+
+      public int BudgetGoalId { get; set; }//Foreign key for BudgetGoal
+
+      public BudgetGoal BudgetGoal { get; set; }
+
 }
 
 }

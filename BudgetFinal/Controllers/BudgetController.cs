@@ -69,25 +69,18 @@ public class BudgetController : Controller
 
     // POST: AddTransaction
     [HttpPost]
-    public async Task<IActionResult> AddTransaction(BudgetViewModel model)
+public async Task<IActionResult> AddTransaction(BudgetViewModel model)
+{
+    if (ModelState.IsValid)
     {
-        // Log incoming model to debug issues
-        _logger.LogInformation("AddTransaction called with transaction ID: {Id}, Amount: {Amount}, Category: {Category}", 
-            model.NewTransaction.Id, model.NewTransaction.Amount, model.NewTransaction.Category);
-
-        // Check ModelState validity
-        if (!ModelState.IsValid)
+        // Check if there is an active budget goal
+        var budgetGoal = model.BudgetGoal;
+        if (budgetGoal != null)
         {
-            // Log errors if any
-            Console.WriteLine("ModelState is invalid:");
-            foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-            {
-                Console.WriteLine($" - {error.ErrorMessage}");
-            }
-            return View("Index", model); // Return to Index if ModelState is invalid
+            model.NewTransaction.BudgetGoalId = budgetGoal.Id; // Assign the BudgetGoalId
         }
 
-        // Retrieve new transaction and set its type based on the amount
+        // Assign the transaction type based on the amount
         var transaction = model.NewTransaction;
         if (transaction.Amount > 0)
         {
@@ -100,7 +93,7 @@ public class BudgetController : Controller
         else
         {
             ModelState.AddModelError("NewTransaction.Amount", "Amount must not be zero.");
-            return View("Index", model); // Show error if amount is zero
+            return View("CreateBudget", model); // Show error in CreateBudget page
         }
 
         // Handle UserId (authenticated users or "Anonymous")
@@ -110,16 +103,19 @@ public class BudgetController : Controller
         }
         else
         {
-            transaction.UserId ??= "Anonymous"; // For unauthenticated users, set as "Anonymous"
+            transaction.UserId ??= "Anonymous"; // For unauthenticated users
         }
 
-        // Save the new transaction
+        // Save the transaction
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
 
-        // Redirect back to Index after adding transaction
-        return RedirectToAction("Index");
+        // Redirect back to CreateBudget after adding transaction
+        return RedirectToAction("CreateBudget");
     }
+
+    return View("CreateBudget", model);
+}
 
     // GET: UpdateTransaction
     [HttpGet]   
@@ -235,32 +231,35 @@ public class BudgetController : Controller
 
 
 
-        [HttpGet]
-        public async Task<IActionResult> CreateBudget()
-            {
-                // Check for an active budget goal
-                var budgetGoal = await _context.BudgetGoals
-                    .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
-                    .FirstOrDefaultAsync();
+[HttpGet]
+public async Task<IActionResult> CreateBudget()
+{
+    // Get the current user ID asynchronously
+    var userId = await GetCurrentUserId();
 
-                if (budgetGoal != null)
-                {
-                    // Calculate total expenses for the active budget goal period
-                    var totalExpenses = _context.Transactions
-                        .Where(t => t.TransactionType == "Expense" &&
-                                    t.Date >= budgetGoal.StartDate &&
-                                    t.Date <= budgetGoal.EndDate)
-                        .Sum(t => t.Amount);
+    // Get the current budget goal based on the current user and the selected date range
+    var budgetGoal = _context.BudgetGoals
+        .Where(bg => bg.UserId == userId && bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+        .FirstOrDefault();
 
-                    // Trigger an alert if the budget is exceeded
-                    if (totalExpenses > budgetGoal.LimitAmount)
-                    {
-                        TempData["BudgetAlert"] = "Warning: You have exceeded your budget!";
-                    }
-                }
+    // If there is no active budget goal, redirect to create one
+    if (budgetGoal == null)
+    {
+        return RedirectToAction("CreateBudgetGoal");
+    }
 
-                return View();
-            }
+    // Create the view model and include the budget goal
+    var model = new BudgetViewModel
+    {
+        BudgetGoal = budgetGoal, // Include the current budget goal
+        Transactions = _context.Transactions
+            .Where(t => t.BudgetGoalId == budgetGoal.Id) // Get transactions related to the current budget goal
+            .ToList(),
+        NewTransaction = new Transaction() // Initialize for form binding
+    };
+
+    return View(model);
+}
 
 
         [HttpPost]

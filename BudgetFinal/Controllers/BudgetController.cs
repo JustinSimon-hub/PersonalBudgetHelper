@@ -263,23 +263,23 @@ public class BudgetController : Controller
             }
 
 
-        [HttpPost]
-        public async Task<IActionResult> CreateBudget(BudgetGoal model)
-        {
-            if (ModelState.IsValid)
-            {
-                // Set the user ID for the budget goal
-                model.UserId = await GetCurrentUserId();
+        // [HttpPost]
+        // public async Task<IActionResult> CreateBudget(BudgetGoal model)
+        // {
+        //     if (ModelState.IsValid)
+        //     {
+        //         // Set the user ID for the budget goal
+        //         model.UserId = await GetCurrentUserId();
 
-                // Add the budget goal to the database
-                _context.BudgetGoals.Add(model);
-                await _context.SaveChangesAsync();
+        //         // Add the budget goal to the database
+        //         _context.BudgetGoals.Add(model);
+        //         await _context.SaveChangesAsync();
 
-                return RedirectToAction("ManageBudget");
-            }
+        //         return RedirectToAction("ManageBudget");
+        //     }
 
-            return View("ManageBudget", model);
-        }
+        //     return View("ManageBudget", model);
+        // }
 
 
 

@@ -1,3 +1,3 @@
 ﻿<Project>
-  <Import Project="../build/BudgetFinal.props" />
+  <Import Project="..\build\BudgetFinal.props" />
 </Project>

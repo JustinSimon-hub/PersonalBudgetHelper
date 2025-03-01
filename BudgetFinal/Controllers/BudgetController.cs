@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using BudgetFinal.Services;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
-
+//App doesnt read the filter budget feature
 public class BudgetController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -208,17 +208,17 @@ public class BudgetController : Controller
         return RedirectToAction("Index");
     }
 
-    public IActionResult ManageBudget()
-        {
-            // Retrieve budget data
-            var budgetLimit = _context.Budgets.FirstOrDefault(); // Or however you retrieve the budget data
+    public IActionResult ManageBudgetOld()
+    {
+        // Retrieve budget data
+        var budgetLimit = _context.Budgets.FirstOrDefault(); // Or however you retrieve the budget data
 
-            if(budgetLimit == null)
-            {
-                budgetLimit = new BudgetLimit(); // Create a new budget limit object if none exists
-            }
-            // Calculate total spending for this month and year
-          var totalSpentThisMonth = _context.Transactions
+        if (budgetLimit == null)
+        {
+            budgetLimit = new BudgetLimit(); // Create a new budget limit object if none exists
+        }
+        // Calculate total spending for this month and year
+        var totalSpentThisMonth = _context.Transactions
             .Where(t => t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
             .Sum(t => (double)t.Amount);  // Convert to double
 
@@ -226,63 +226,124 @@ public class BudgetController : Controller
             .Where(t => t.Date.Year == DateTime.Now.Year)
             .Sum(t => (double)t.Amount);  // Convert to double
 
-            // Pass data to the view
-            ViewBag.TotalSpentThisMonth = totalSpentThisMonth;
-            ViewBag.TotalSpentThisYear = totalSpentThisYear;
+        // Pass data to the view
+        ViewBag.TotalSpentThisMonth = totalSpentThisMonth;
+        ViewBag.TotalSpentThisYear = totalSpentThisYear;
 
-            return View(budgetLimit); // Pass the budget limit model to the view
+        return View(budgetLimit); // Pass the budget limit model to the view
+    }
+
+    // GET: Budget/Create
+    [HttpGet]
+    public IActionResult CreateBudget()
+    {
+        return View();
+    }
+
+    // POST: Budget/Create
+    [HttpPost]
+    public async Task<IActionResult> CreateBudget(BudgetGoal model)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.BudgetGoals.Add(model);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("ManageBudget");
         }
+        return View(model);
+    }
 
+    // GET: Budget/Edit/5
+    [HttpGet]
+    public async Task<IActionResult> EditBudget(int id)
+    {
+        var budgetGoal = await _context.BudgetGoals.FindAsync(id);
+        if (budgetGoal == null)
+        {
+            return NotFound();
+        }
+        return View(budgetGoal);
+    }
 
+    // POST: Budget/Edit/5
+    [HttpPost]
+    public async Task<IActionResult> EditBudget(BudgetGoal model)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.Update(model);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("ManageBudget");
+        }
+        return View(model);
+    }
 
-        [HttpGet]
-        public async Task<IActionResult> CreateBudget()
+    // GET: Budget/Delete/5
+    [HttpGet]
+    public async Task<IActionResult> DeleteBudget(int id)
+    {
+        var budgetGoal = await _context.BudgetGoals.FindAsync(id);
+        if (budgetGoal == null)
+        {
+            return NotFound();
+        }
+        return View(budgetGoal);
+    }
+
+    // POST: Budget/Delete/5
+    [HttpPost, ActionName("DeleteBudget")]
+    public async Task<IActionResult> DeleteBudgetConfirmed(int id)
+    {
+        var budgetGoal = await _context.BudgetGoals.FindAsync(id);
+        if (budgetGoal != null)
+        {
+            _context.BudgetGoals.Remove(budgetGoal);
+            await _context.SaveChangesAsync();
+        }
+        return RedirectToAction("ManageBudget");
+    }
+
+    // GET: Budget/Details/5
+    [HttpGet]
+    public async Task<IActionResult> DetailsBudget(int id)
+    {
+        var budgetGoal = await _context.BudgetGoals.FindAsync(id);
+        if (budgetGoal == null)
+        {
+            return NotFound();
+        }
+        return View(budgetGoal);
+    }
+
+    // GET: Budget/Manage
+    public async Task<IActionResult> ManageBudget()
+    {
+        var budgetGoal = await _context.BudgetGoals
+            .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+            .FirstOrDefaultAsync();
+
+        if (budgetGoal != null)
+        {
+            // Calculate total expenses for the active budget goal period
+            var totalExpenses = _context.Transactions
+                .Where(t => t.TransactionType == "Expense" &&
+                            t.Date >= budgetGoal.StartDate &&
+                            t.Date <= budgetGoal.EndDate)
+                .Sum(t => t.Amount);
+
+            // Trigger an alert if the budget is exceeded or reaches 0 or below
+            if (totalExpenses > budgetGoal.LimitAmount)
             {
-                // Check for an active budget goal
-                var budgetGoal = await _context.BudgetGoals
-                    .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
-                    .FirstOrDefaultAsync();
-
-                if (budgetGoal != null)
-                {
-                    // Calculate total expenses for the active budget goal period
-                    var totalExpenses = _context.Transactions
-                        .Where(t => t.TransactionType == "Expense" &&
-                                    t.Date >= budgetGoal.StartDate &&
-                                    t.Date <= budgetGoal.EndDate)
-                        .Sum(t => t.Amount);
-
-                    // Trigger an alert if the budget is exceeded
-                    if (totalExpenses > budgetGoal.LimitAmount)
-                    {
-                        TempData["BudgetAlert"] = "Warning: You have exceeded your budget!";
-                    }
-                }
-
-                return View();
+                TempData["BudgetAlert"] = "Warning: You have exceeded your budget!";
+            }
+            else if (budgetGoal.LimitAmount - totalExpenses <= 0)
+            {
+                TempData["BudgetAlert"] = "Warning: Your budget has reached 0 or below!";
             }
 
+            ViewBag.TotalExpenses = totalExpenses;
+        }
 
-        // [HttpPost]
-        // public async Task<IActionResult> CreateBudget(BudgetGoal model)
-        // {
-        //     if (ModelState.IsValid)
-        //     {
-        //         // Set the user ID for the budget goal
-        //         model.UserId = await GetCurrentUserId();
-
-        //         // Add the budget goal to the database
-        //         _context.BudgetGoals.Add(model);
-        //         await _context.SaveChangesAsync();
-
-        //         return RedirectToAction("ManageBudget");
-        //     }
-
-        //     return View("ManageBudget", model);
-        // }
-
-
-
-
-
+        return View(budgetGoal);
+    }
 }

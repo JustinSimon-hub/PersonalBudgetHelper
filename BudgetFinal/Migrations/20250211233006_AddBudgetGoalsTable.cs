@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BudgetFinal.Migrations
 {
     /// <inheritdoc />
-    public partial class AddedUpdatedMigrationsGoal : Migration
+    public partial class AddBudgetGoalsTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BudgetFinal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250103205525_AddedUpdatedMigrationsGoal")]
-    partial class AddedUpdatedMigrationsGoal
+    [Migration("20250211233006_AddBudgetGoalsTable")]
+    partial class AddBudgetGoalsTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

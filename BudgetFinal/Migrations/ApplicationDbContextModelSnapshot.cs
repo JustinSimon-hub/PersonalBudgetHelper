@@ -16,6 +16,26 @@ namespace BudgetFinal.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
 
+            modelBuilder.Entity("BudgetFinal.Models.BudgetGoal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("LimitAmount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BudgetGoals");
+                });
+
             modelBuilder.Entity("BudgetFinal.Models.BudgetLimit", b =>
                 {
                     b.Property<int>("Id")
@@ -30,7 +50,7 @@ namespace BudgetFinal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Budgets", (string)null);
+                    b.ToTable("Budgets");
                 });
 
             modelBuilder.Entity("BudgetFinal.Models.Transaction", b =>
@@ -62,7 +82,7 @@ namespace BudgetFinal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transactions");
                 });
 #pragma warning restore 612, 618
         }

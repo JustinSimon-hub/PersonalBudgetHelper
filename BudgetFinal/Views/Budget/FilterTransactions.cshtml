@@ -1,54 +1,54 @@
 @model TransactionFilterViewModel
-
-<h2>Filter Transactions</h2>
-
-<form method="get" asp-action="FilterTransactions">
-    <div class="form-group">
-        <label for="Category">Category</label>
-        <input type="text" id="Category" asp-for="Category" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label for="StartDate">Start Date</label>
-        <input type="date" id="StartDate" asp-for="StartDate" class="form-control" />
-    </div>
-
-    <div class="form-group">
-        <label for="EndDate">End Date</label>
-        <input type="date" id="EndDate" asp-for="EndDate" class="form-control" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Filter</button>
-</form>
-
-@if (Model.FilteredTransactions != null && Model.FilteredTransactions.Any())
-{
-    <h3>Filtered Transactions</h3>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Category</th>
-                <th>Date</th>
-                <th>Transaction Type</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var transaction in Model.FilteredTransactions)
-            {
-                <tr>
-                    <td>@transaction.Description</td>
-                    <td>@transaction.Amount</td>
-                    <td>@transaction.Category</td>
-                    <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
-                    <td>@transaction.TransactionType</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <p>No transactions found based on the selected filters.</p>
-}
+ 
+ <h2>Filter Transactions</h2>
+ 
+ <form method="get" asp-action="FilterTransactions">
+     <div class="form-group">
+         <label for="Category">Category</label>
+         <input type="text" id="Category" asp-for="Category" class="form-control" />
+     </div>
+ 
+     <div class="form-group">
+         <label for="StartDate">Start Date</label>
+         <input type="date" id="StartDate" asp-for="StartDate" class="form-control" />
+     </div>
+ 
+     <div class="form-group">
+         <label for="EndDate">End Date</label>
+         <input type="date" id="EndDate" asp-for="EndDate" class="form-control" />
+     </div>
+ 
+     <button type="submit" class="btn btn-primary">Filter</button>
+ </form>
+ 
+ @if (Model.FilteredTransactions != null && Model.FilteredTransactions.Any())
+ {
+     <h3>Filtered Transactions</h3>
+     <table class="table">
+         <thead>
+             <tr>
+                 <th>Description</th>
+                 <th>Amount</th>
+                 <th>Category</th>
+                 <th>Date</th>
+                 <th>Transaction Type</th>
+             </tr>
+         </thead>
+         <tbody>
+             @foreach (var transaction in Model.FilteredTransactions)
+             {
+                 <tr>
+                     <td>@transaction.Description</td>
+                     <td>@transaction.Amount</td>
+                     <td>@transaction.Category</td>
+                     <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
+                     <td>@transaction.TransactionType</td>
+                 </tr>
+             }
+         </tbody>
+     </table>
+ }
+ else
+ {
+     <p>No transactions found based on the selected filters.</p>
+ }

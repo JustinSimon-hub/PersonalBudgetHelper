@@ -346,4 +346,34 @@ public class BudgetController : Controller
 
         return View(budgetGoal);
     }
+
+    public IActionResult FilterTransactions(TransactionFilterViewModel model)
+ {
+     // Start with all transactions from the database
+     var transactions = _context.Transactions.AsQueryable();
+ 
+     // Filter by category if provided
+     if (!string.IsNullOrEmpty(model.Category))
+     {
+         transactions = transactions.Where(t => t.Category.Contains(model.Category));
+     }
+ 
+     // Filter by date range if provided
+     if (model.StartDate.HasValue)
+     {
+         transactions = transactions.Where(t => t.Date >= model.StartDate.Value);
+     }
+ 
+     if (model.EndDate.HasValue)
+     {
+         transactions = transactions.Where(t => t.Date <= model.EndDate.Value);
+     }
+ 
+     // Assign the filtered results to the model
+     model.FilteredTransactions = transactions.ToList();
+ 
+     // Return the filtered view
+     return View(model);
+ }
+ 
 }

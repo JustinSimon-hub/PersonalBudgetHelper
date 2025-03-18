@@ -315,37 +315,55 @@ public class BudgetController : Controller
         return View(budgetGoal);
     }
 
-    // GET: Budget/Manage
-    public async Task<IActionResult> ManageBudget()
+   
+   // GET: Budget/Manage
+public async Task<IActionResult> ManageBudget()
+{
+    var budgetGoal = await _context.BudgetGoals
+        .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+        .FirstOrDefaultAsync();
+
+    if (budgetGoal != null)
     {
-        var budgetGoal = await _context.BudgetGoals
-            .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
-            .FirstOrDefaultAsync();
+        // Calculate total income and expenses for the active budget goal period
+        var totalIncome = _context.Transactions
+            .Where(t => t.TransactionType == "Income" &&
+                        t.Date >= budgetGoal.StartDate &&
+                        t.Date <= budgetGoal.EndDate)
+            .Sum(t => t.Amount);
 
-        if (budgetGoal != null)
+        var totalExpenses = _context.Transactions
+            .Where(t => t.TransactionType == "Expense" &&
+                        t.Date >= budgetGoal.StartDate &&
+                        t.Date <= budgetGoal.EndDate)
+            .Sum(t => t.Amount);
+
+    
+
+        // Trigger an alert if the budget is exceeded or reaches 0 or below
+        if (totalExpenses > budgetGoal.LimitAmount)
         {
-            // Calculate total expenses for the active budget goal period
-            var totalExpenses = _context.Transactions
-                .Where(t => t.TransactionType == "Expense" &&
-                            t.Date >= budgetGoal.StartDate &&
-                            t.Date <= budgetGoal.EndDate)
-                .Sum(t => t.Amount);
-
-            // Trigger an alert if the budget is exceeded or reaches 0 or below
-            if (totalExpenses > budgetGoal.LimitAmount)
-            {
-                TempData["BudgetAlert"] = "Warning: You have exceeded your budget!";
-            }
-            else if (budgetGoal.LimitAmount - totalExpenses <= 0)
-            {
-                TempData["BudgetAlert"] = "Warning: Your budget has reached 0 or below!";
-            }
-
-            ViewBag.TotalExpenses = totalExpenses;
+            TempData["BudgetAlert"] = "Warning: You have exceeded your budget!";
+        }
+        else if (budgetGoal.LimitAmount - totalExpenses <= 0)
+        {
+            TempData["BudgetAlert"] = "Warning: Your budget has reached 0 or below!";
         }
 
-        return View(budgetGoal);
+        ViewBag.TotalIncome = totalIncome;
+        ViewBag.TotalExpenses = totalExpenses;
     }
+    else
+    {
+        // Initialize ViewBag to avoid null reference
+        ViewBag.TotalIncome = 0;
+        ViewBag.TotalExpenses = 0;
+    }
+
+    return View(budgetGoal);
+}
+
+
 
     public IActionResult FilterTransactions(TransactionFilterViewModel model)
  {

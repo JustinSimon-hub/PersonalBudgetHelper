@@ -11,6 +11,9 @@ namespace BudgetFinal.Models
         public DateTime EndDate { get; set; }   
         [Required]
         public decimal LimitAmount { get; set; }
+
+        //This is the property for alerting the user when the budget has been exceeded
+        public int BudgetLimit { get; set; }
         
 
     }

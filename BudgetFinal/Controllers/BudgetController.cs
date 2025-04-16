@@ -55,6 +55,17 @@ public class BudgetController : Controller
     // Index action to load the dashboard view
     public IActionResult Index()
     {
+         // Calculate total income, expenses, and balance
+            var totalIncome = CalculateTotalIncome();
+            var totalExpenses = CalculateTotalExpenses();
+            var balance = CalculateBalance();
+
+            // Trigger an alert if expenses exceed income
+            if (totalExpenses > totalIncome)
+            {
+                TempData["BudgetAlert"] = "Warning: Your expenses have exceeded your income!";
+            }
+
         var model = new BudgetViewModel
         {
             TotalIncome = CalculateTotalIncome(),
@@ -317,6 +328,7 @@ public class BudgetController : Controller
 
    
    // GET: Budget/Manage
+// GET: Budget/Manage
 public async Task<IActionResult> ManageBudget()
 {
     var budgetGoal = await _context.BudgetGoals
@@ -338,7 +350,11 @@ public async Task<IActionResult> ManageBudget()
                         t.Date <= budgetGoal.EndDate)
             .Sum(t => t.Amount);
 
-    
+        // Trigger an alert if expenses exceed income
+        if (totalExpenses > totalIncome)
+        {
+            TempData["BudgetAlert"] = "Warning: Your expenses have exceeded your income!";
+        }
 
         // Trigger an alert if the budget is exceeded or reaches 0 or below
         if (totalExpenses > budgetGoal.LimitAmount)
@@ -362,7 +378,6 @@ public async Task<IActionResult> ManageBudget()
 
     return View(budgetGoal);
 }
-
 
 
     public IActionResult FilterTransactions(TransactionFilterViewModel model)

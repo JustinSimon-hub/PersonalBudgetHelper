@@ -364,6 +364,40 @@ public async Task<IActionResult> ManageBudget()
 }
 
 
+// POST: Budget/SetMinimumThreshold
+[HttpPost]
+public async Task<IActionResult> SetMinimumThreshold(decimal MinimumBudgetThreshold)
+{
+    // Retrieve the current budget goal (you can modify this logic as needed)
+    var budgetGoal = await _context.BudgetGoals
+        .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+        .FirstOrDefaultAsync();
+
+    if (budgetGoal == null)
+    {
+        // Create a new budget goal if none exists
+        budgetGoal = new BudgetGoal
+        {
+            MinimumBudgetThreshold = MinimumBudgetThreshold,
+            StartDate = DateTime.Now,
+            EndDate = DateTime.Now.AddMonths(1) // Example: 1-month budget period
+        };
+        _context.BudgetGoals.Add(budgetGoal);
+    }
+    else
+    {
+        // Update the existing budget goal
+        budgetGoal.MinimumBudgetThreshold = MinimumBudgetThreshold;
+        _context.BudgetGoals.Update(budgetGoal);
+    }
+
+    await _context.SaveChangesAsync();
+
+    TempData["SuccessMessage"] = "Minimum budget threshold has been set successfully!";
+    return RedirectToAction("Index");
+}
+
+
 
     public IActionResult FilterTransactions(TransactionFilterViewModel model)
  {

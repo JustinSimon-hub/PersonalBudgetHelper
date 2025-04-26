@@ -30,6 +30,29 @@
     });
 </script>
 
+
+
+
+<!-- Form to Set Minimum Budget Threshold -->
+<h2>Set Your Minimum Budget Threshold</h2>
+<form asp-action="SetMinimumThreshold" method="post">
+    <div class="form-group">
+        <label for="MinimumBudgetThreshold">Minimum Budget Threshold</label>
+        <input type="number" step="0.01" class="form-control" id="MinimumBudgetThreshold" name="MinimumBudgetThreshold" value="@Model.MinimumBudgetThreshold" />
+    </div>
+    <button type="submit" class="btn btn-primary">Set Threshold</button>
+</form>
+
+@if (TempData["ThresholdAlert"] != null)
+{
+    <div class="alert alert-warning">
+        @TempData["ThresholdAlert"]
+    </div>
+}
+
+
+
+
 <!-- Form to Add a New Transaction -->
 <form asp-action="AddTransaction" method="post">
     <div class="form-group">

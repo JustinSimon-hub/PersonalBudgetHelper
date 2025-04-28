@@ -338,16 +338,13 @@ public async Task<IActionResult> ManageBudget()
                         t.Date <= budgetGoal.EndDate)
             .Sum(t => t.Amount);
 
-    
+        //This variable is here because its needed to deteermine when to trigger the alert
+        var balance = totalIncome - totalExpenses;
 
-        // Trigger an alert if the budget is exceeded or reaches 0 or below
-        if (totalExpenses > budgetGoal.LimitAmount)
+        // Trigger an alert if the balance falls below the minimum threshold
+        if (balance < budgetGoal.MinimumBudgetThreshold)
         {
-            TempData["BudgetAlert"] = "Warning: You have exceeded your budget!";
-        }
-        else if (budgetGoal.LimitAmount - totalExpenses <= 0)
-        {
-            TempData["BudgetAlert"] = "Warning: Your budget has reached 0 or below!";
+            TempData["BudgetAlert"] = "Warning: Your balance has fallen below the minimum budget threshold!";
         }
 
         ViewBag.TotalIncome = totalIncome;

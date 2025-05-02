@@ -35,15 +35,17 @@ public class BudgetController : Controller
     // Helper method to calculate total income
     private decimal CalculateTotalIncome()
     {
-        var transactions = _context.Transactions.ToList();
-        return transactions.Where(t => t.TransactionType == "Income").Sum(t => (decimal)t.Amount);
+       return (decimal)_context.Transactions
+        .Where(t => t.TransactionType == "Income")
+        .Sum(t => (double)t.Amount); // Convert Amount to double for SQLite compatibility
     }
 
     // Helper method to calculate total expenses
     private decimal CalculateTotalExpenses()
     {
-        var transactions = _context.Transactions.ToList();
-        return transactions.Where(t => t.TransactionType == "Expense").Sum(t => (decimal)t.Amount);
+       return (decimal)_context.Transactions
+        .Where(t => t.TransactionType == "Expense")
+        .Sum(t => (double)t.Amount); // Convert Amount to double for SQLite compatibility
     }
 
     // Helper method to calculate balance (Income - Expenses)
@@ -55,13 +57,19 @@ public class BudgetController : Controller
     // Index action to load the dashboard view
     public IActionResult Index()
     {
+        //This is to compare the budget goal with the balance
+        var budgetGoal = _context.BudgetGoals
+            .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+            .FirstOrDefault();
+
         var model = new BudgetViewModel
         {
             TotalIncome = CalculateTotalIncome(),
             TotalExpenses = CalculateTotalExpenses(),
             Balance = CalculateBalance(),
             Transactions = _context.Transactions.ToList(),
-            NewTransaction = new Transaction() // Initialize NewTransaction for form binding
+            NewTransaction = new Transaction(), // Initialize NewTransaction for form binding
+            MinimumBudgetThreshold = budgetGoal?.MinimumBudgetThreshold ?? 0 // Initialize MinimumBudgetThreshold
         };
 
         return View(model);

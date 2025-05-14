@@ -5,7 +5,7 @@
 namespace BudgetFinal.Migrations
 {
     /// <inheritdoc />
-    public partial class AddMinimumBudgetThresholdToBudgetGoal : Migration
+    public partial class AddMinimumBudgetThreshold : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

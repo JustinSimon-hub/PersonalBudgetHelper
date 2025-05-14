@@ -6,7 +6,6 @@
     <p>Total Income: @Model.TotalIncome</p>
     <p>Total Expenses: @Model.TotalExpenses</p>
     <p>Balance: @Model.Balance</p>
-    <p>Minimum Budget Threshold: @Model.MinimumBudgetThreshold</p> <!-- Display the threshold -->
 </div>
 
 <!-- Chart for Income vs Expenses -->
@@ -34,22 +33,6 @@
 
 
 
-<!-- Form to Set Minimum Budget Threshold -->
-<h2>Set Your Minimum Budget Threshold</h2>
-<form asp-action="SetMinimumThreshold" method="post">
-    <div class="form-group">
-        <label for="MinimumBudgetThreshold">Minimum Budget Threshold</label>
-        <input type="number" step="0.01" class="form-control" id="MinimumBudgetThreshold" name="MinimumBudgetThreshold" value="@Model.MinimumBudgetThreshold" />
-    </div>
-    <button type="submit" class="btn btn-primary">Set Threshold</button>
-</form>
-
-@if (TempData["ThresholdAlert"] != null)
-{
-    <div class="alert alert-warning">
-        @TempData["ThresholdAlert"]
-    </div>
-}
 
 
 

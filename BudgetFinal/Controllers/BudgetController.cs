@@ -69,7 +69,6 @@ public class BudgetController : Controller
             Balance = CalculateBalance(),
             Transactions = _context.Transactions.ToList(),
             NewTransaction = new Transaction(), // Initialize NewTransaction for form binding
-            MinimumBudgetThreshold = budgetGoal?.MinimumBudgetThreshold ?? 0 // Initialize MinimumBudgetThreshold
         };
 
         return View(model);
@@ -322,86 +321,6 @@ public class BudgetController : Controller
         }
         return View(budgetGoal);
     }
-
-   
-   // GET: Budget/Manage
-public async Task<IActionResult> ManageBudget()
-{
-    var budgetGoal = await _context.BudgetGoals
-        .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
-        .FirstOrDefaultAsync();
-
-    if (budgetGoal != null)
-    {
-        // Calculate total income and expenses for the active budget goal period
-        var totalIncome = _context.Transactions
-            .Where(t => t.TransactionType == "Income" &&
-                        t.Date >= budgetGoal.StartDate &&
-                        t.Date <= budgetGoal.EndDate)
-            .Sum(t => t.Amount);
-
-        var totalExpenses = _context.Transactions
-            .Where(t => t.TransactionType == "Expense" &&
-                        t.Date >= budgetGoal.StartDate &&
-                        t.Date <= budgetGoal.EndDate)
-            .Sum(t => t.Amount);
-
-        //This variable is here because its needed to deteermine when to trigger the alert
-        var balance = totalIncome - totalExpenses;
-
-        // Trigger an alert if the balance falls below the minimum threshold
-        if (balance < budgetGoal.MinimumBudgetThreshold)
-        {
-            TempData["BudgetAlert"] = "Warning: Your balance has fallen below the minimum budget threshold!";
-        }
-
-        ViewBag.TotalIncome = totalIncome;
-        ViewBag.TotalExpenses = totalExpenses;
-    }
-    else
-    {
-        // Initialize ViewBag to avoid null reference
-        ViewBag.TotalIncome = 0;
-        ViewBag.TotalExpenses = 0;
-    }
-
-    return View(budgetGoal);
-}
-
-
-// POST: Budget/SetMinimumThreshold
-[HttpPost]
-public async Task<IActionResult> SetMinimumThreshold(decimal MinimumBudgetThreshold)
-{
-    // Retrieve the current budget goal (you can modify this logic as needed)
-    var budgetGoal = await _context.BudgetGoals
-        .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
-        .FirstOrDefaultAsync();
-
-    if (budgetGoal == null)
-    {
-        // Create a new budget goal if none exists
-        budgetGoal = new BudgetGoal
-        {
-            MinimumBudgetThreshold = MinimumBudgetThreshold,
-            StartDate = DateTime.Now,
-            EndDate = DateTime.Now.AddMonths(1) // Example: 1-month budget period
-        };
-        _context.BudgetGoals.Add(budgetGoal);
-    }
-    else
-    {
-        // Update the existing budget goal
-        budgetGoal.MinimumBudgetThreshold = MinimumBudgetThreshold;
-        _context.BudgetGoals.Update(budgetGoal);
-    }
-
-    await _context.SaveChangesAsync();
-
-    TempData["SuccessMessage"] = "Minimum budget threshold has been set successfully!";
-    return RedirectToAction("Index");
-}
-
 
 
     public IActionResult FilterTransactions(TransactionFilterViewModel model)

@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BudgetFinal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250428165545_AddMinimumBudgetThresholdToBudgetGoal")]
-    partial class AddMinimumBudgetThresholdToBudgetGoal
+    [Migration("20250514083039_AddMinimumBudgetThreshold")]
+    partial class AddMinimumBudgetThreshold
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

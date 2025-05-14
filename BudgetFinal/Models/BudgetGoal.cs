@@ -12,7 +12,7 @@ namespace BudgetFinal.Models
         [Required]
         public decimal LimitAmount { get; set; }
 
-        //This property is being used to enable the alert system used in the frontend
+        //Min budget threshhold property 
         public decimal MinimumBudgetThreshold { get; set; }
         
 

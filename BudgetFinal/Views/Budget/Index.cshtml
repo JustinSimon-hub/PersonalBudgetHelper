@@ -8,6 +8,17 @@
     <p>Balance: @Model.Balance</p>
     <p>Minimum Budget Threshold: @Model.MinimumBudgetThreshold</p>
 </div>
+
+@if (TempData["ExpenseAlert"] != null && (bool)TempData["ExpenseAlert"])
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            alert("Warning: Your expenses have exceeded your income!");
+        });
+    </script>
+}
+
+
 @if (TempData["BudgetAlert"] != null)
 {
     <div class="alert alert-warning">

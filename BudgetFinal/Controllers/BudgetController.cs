@@ -67,6 +67,14 @@ public class BudgetController : Controller
         var totalExpenses = CalculateTotalExpenses();
         var balance = totalIncome - totalExpenses;
 
+    //Check if the expense exceed the income
+    if (totalExpenses > totalIncome)
+        {
+                    TempData["ExpenseAlert"] = true; // Set a flag for the popup
+                    _logger.LogInformation("ExpenseAlert triggered: TotalIncome = {TotalIncome}, TotalExpenses = {TotalExpenses}", totalIncome, totalExpenses);
+
+        }
+
     //System for checking balance falling below the min
     if(budgetGoal != null && balance < budgetGoal.MinimumBudgetThreshold)
         {
@@ -75,9 +83,9 @@ public class BudgetController : Controller
 
         var model = new BudgetViewModel
         {
-            TotalIncome = CalculateTotalIncome(),
-            TotalExpenses = CalculateTotalExpenses(),
-            Balance = CalculateBalance(),
+            TotalIncome = totalIncome,
+            TotalExpenses = totalExpenses,
+            Balance = balance,
             Transactions = _context.Transactions.ToList(),
             NewTransaction = new Transaction(), // Initialize NewTransaction for form binding
             MinimumBudgetThreshold = budgetGoal?.MinimumBudgetThreshold ?? 0 // Set the minimum budget threshold

@@ -57,7 +57,7 @@ public class BudgetController : Controller
     // Index action to load the dashboard view
     public IActionResult Index()
     {
-        //Retrieves teh current budget goal
+        //Retrieves the current budget goal
         var budgetGoal = _context.BudgetGoals
             .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
             .FirstOrDefault();
@@ -80,6 +80,7 @@ public class BudgetController : Controller
             Balance = CalculateBalance(),
             Transactions = _context.Transactions.ToList(),
             NewTransaction = new Transaction(), // Initialize NewTransaction for form binding
+            MinimumBudgetThreshold = budgetGoal?.MinimumBudgetThreshold ?? 0 // Set the minimum budget threshold
         };
 
         return View(model);

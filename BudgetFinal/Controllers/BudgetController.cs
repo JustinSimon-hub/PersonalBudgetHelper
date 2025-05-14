@@ -57,10 +57,21 @@ public class BudgetController : Controller
     // Index action to load the dashboard view
     public IActionResult Index()
     {
-        //This is to compare the budget goal with the balance
+        //Retrieves teh current budget goal
         var budgetGoal = _context.BudgetGoals
             .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
             .FirstOrDefault();
+
+        //calculates the total income, expenses, and balance
+        var totalIncome = CalculateTotalIncome();
+        var totalExpenses = CalculateTotalExpenses();
+        var balance = totalIncome - totalExpenses;
+
+    //System for checking balance falling below the min
+    if(budgetGoal != null && balance < budgetGoal.MinimumBudgetThreshold)
+        {
+           TempData["BudgetAlert"] = "Warning: Your balance has fallen below the minimum budget threshold!";
+        }
 
         var model = new BudgetViewModel
         {
@@ -351,5 +362,39 @@ public class BudgetController : Controller
      // Return the filtered view
      return View(model);
  }
+
+
+ [HttpPost]
+public async Task<IActionResult> SetMinimumThreshold(decimal MinimumBudgetThreshold)
+{
+    // Retrieve the active budget goal
+    var budgetGoal = await _context.BudgetGoals
+        .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+        .FirstOrDefaultAsync();
+
+    if (budgetGoal == null)
+    {
+        // Create a new budget goal if none exists
+        budgetGoal = new BudgetGoal
+        {
+            MinimumBudgetThreshold = MinimumBudgetThreshold,
+            StartDate = DateTime.Now,
+            EndDate = DateTime.Now.AddMonths(1), // Example: 1-month budget period
+            LimitAmount = 1000 // Default limit amount
+        };
+        _context.BudgetGoals.Add(budgetGoal);
+    }
+    else
+    {
+        // Update the existing budget goal
+        budgetGoal.MinimumBudgetThreshold = MinimumBudgetThreshold;
+        _context.BudgetGoals.Update(budgetGoal);
+    }
+
+    await _context.SaveChangesAsync();
+
+    TempData["SuccessMessage"] = "Minimum budget threshold has been set successfully!";
+    return RedirectToAction("Index");
+}
  
 }

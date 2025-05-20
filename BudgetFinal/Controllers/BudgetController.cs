@@ -71,6 +71,7 @@ public class BudgetController : Controller
     if (totalExpenses > totalIncome)
         {
                     TempData["ExpenseAlert"] = true; // Set a flag for the popup
+                    TempData.Keep("ExpenseAlert");
                     _logger.LogInformation("ExpenseAlert triggered: TotalIncome = {TotalIncome}, TotalExpenses = {TotalExpenses}", totalIncome, totalExpenses);
 
         }

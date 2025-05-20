@@ -37,7 +37,7 @@ public class BudgetController : Controller
     {
        return (decimal)_context.Transactions
         .Where(t => t.TransactionType == "Income")
-        .Sum(t => (double)t.Amount); // Convert Amount to double for SQLite compatibility
+        .Sum(t => (double)t.Amount);
     }
 
     // Helper method to calculate total expenses
@@ -45,13 +45,15 @@ public class BudgetController : Controller
     {
        return (decimal)_context.Transactions
         .Where(t => t.TransactionType == "Expense")
-        .Sum(t => (double)t.Amount); // Convert Amount to double for SQLite compatibility
+        .Sum(t => Math.Abs((double)t.Amount)); // Ensure positive sum
     }
 
     // Helper method to calculate balance (Income - Expenses)
     private decimal CalculateBalance()
     {
-        return CalculateTotalIncome() - CalculateTotalExpenses();
+        var totalIncome = CalculateTotalIncome();
+        var totalExpenses = CalculateTotalExpenses();
+        return totalIncome - totalExpenses; // Return the balance
     }
 
     // Index action to load the dashboard view
@@ -65,7 +67,7 @@ public class BudgetController : Controller
         //calculates the total income, expenses, and balance
         var totalIncome = CalculateTotalIncome();
         var totalExpenses = CalculateTotalExpenses();
-        var balance = totalIncome - totalExpenses;
+        var balance = CalculateBalance();
 
     //Check if the expense exceed the income
     if (totalExpenses > totalIncome)

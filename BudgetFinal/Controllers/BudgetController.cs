@@ -37,7 +37,7 @@ public class BudgetController : Controller
     {
        return (decimal)_context.Transactions
         .Where(t => t.TransactionType == "Income")
-        .Sum(t => (double)t.Amount);
+        .Sum(t => (double)t.Amount); // Convert Amount to double for SQLite compatibility
     }
 
     // Helper method to calculate total expenses

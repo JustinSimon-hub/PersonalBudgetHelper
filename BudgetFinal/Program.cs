@@ -14,6 +14,8 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+//Pass along razor pages to live deployment
+builder.Services.AddRazorPages();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -41,9 +43,16 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+
+
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Budget}/{action=Index}/{id?}");
+
+
+//Pass along pages to live deployment   
+app.MapRazorPages();
 
 app.Run();
 

@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Identity;
 using BudgetFinal.Services;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Testing.Areas.Identity.Data;
 //App doesnt read the filter budget feature
+[Authorize]
 public class BudgetController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -33,41 +36,45 @@ public class BudgetController : Controller
     }
 
     // Helper method to calculate total income
-    private decimal CalculateTotalIncome()
+    private async Task<decimal> CalculateTotalIncome()
     {
+       var userId = await GetCurrentUserId();
        return (decimal)_context.Transactions
-        .Where(t => t.TransactionType == "Income")
+        .Where(t => t.UserId == userId && t.TransactionType == "Income")
         .Sum(t => (double)t.Amount); // Convert Amount to double for SQLite compatibility
     }
 
     // Helper method to calculate total expenses
-    private decimal CalculateTotalExpenses()
+    private async Task<decimal> CalculateTotalExpenses()
     {
+       var userId = await GetCurrentUserId();
        return (decimal)_context.Transactions
-        .Where(t => t.TransactionType == "Expense")
+        .Where(t => t.UserId == userId && t.TransactionType == "Expense")
         .Sum(t => Math.Abs((double)t.Amount)); // Ensure positive sum
     }
 
     // Helper method to calculate balance (Income - Expenses)
-    private decimal CalculateBalance()
+    private async Task<decimal> CalculateBalance()
     {
-        var totalIncome = CalculateTotalIncome();
-        var totalExpenses = CalculateTotalExpenses();
+        var totalIncome = await CalculateTotalIncome();
+        var totalExpenses = await CalculateTotalExpenses();
         return totalIncome - totalExpenses; // Return the balance
     }
 
     // Index action to load the dashboard view
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        var userId = await GetCurrentUserId();
+
         //Retrieves the current budget goal
         var budgetGoal = _context.BudgetGoals
-            .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+            .Where(bg => bg.UserId == userId && bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
             .FirstOrDefault();
 
         //calculates the total income, expenses, and balance
-        var totalIncome = CalculateTotalIncome();
-        var totalExpenses = CalculateTotalExpenses();
-        var balance = CalculateBalance();
+        var totalIncome = await CalculateTotalIncome();
+        var totalExpenses = await CalculateTotalExpenses();
+        var balance = await CalculateBalance();
 
     //Check if the expense exceed the income
     if (totalExpenses > totalIncome)
@@ -89,7 +96,7 @@ public class BudgetController : Controller
             TotalIncome = totalIncome,
             TotalExpenses = totalExpenses,
             Balance = balance,
-            Transactions = _context.Transactions.ToList(),
+            Transactions = _context.Transactions.Where(t => t.UserId == userId).ToList(),
             NewTransaction = new Transaction(), // Initialize NewTransaction for form binding
             MinimumBudgetThreshold = budgetGoal?.MinimumBudgetThreshold ?? 0 // Set the minimum budget threshold
         };
@@ -133,15 +140,8 @@ public class BudgetController : Controller
             return View("Index", model); // Show error if amount is zero
         }
 
-        // Handle UserId (authenticated users or "Anonymous")
-        if (User.Identity.IsAuthenticated)
-        {
-            transaction.UserId = await GetCurrentUserId();
-        }
-        else
-        {
-            transaction.UserId ??= "Anonymous"; // For unauthenticated users, set as "Anonymous"
-        }
+        // Set UserId for authenticated user
+        transaction.UserId = await GetCurrentUserId();
 
         // Save the new transaction
         _context.Transactions.Add(transaction);
@@ -153,9 +153,10 @@ public class BudgetController : Controller
 
     // GET: UpdateTransaction
     [HttpGet]   
-    public IActionResult UpdateTransaction(int id)
+    public async Task<IActionResult> UpdateTransaction(int id)
     {
-        var existingTransaction = _context.Transactions.Find(id);
+        var userId = await GetCurrentUserId();
+        var existingTransaction = _context.Transactions.FirstOrDefault(t => t.Id == id && t.UserId == userId);
         if (existingTransaction == null)
         {
             return NotFound($"Transaction with ID {id} not found.");
@@ -171,7 +172,7 @@ public class BudgetController : Controller
 
     // POST: UpdateTransaction
     [HttpPost]
-    public IActionResult UpdateTransaction(BudgetViewModel model)
+    public async Task<IActionResult> UpdateTransaction(BudgetViewModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -184,7 +185,8 @@ public class BudgetController : Controller
             return View(model);
         }
 
-        var existingTransaction = _context.Transactions.Find(model.NewTransaction.Id);
+        var userId = await GetCurrentUserId();
+        var existingTransaction = _context.Transactions.FirstOrDefault(t => t.Id == model.NewTransaction.Id && t.UserId == userId);
         if (existingTransaction == null)
         {
             return NotFound($"Transaction with ID {model.NewTransaction.Id} not found.");
@@ -209,14 +211,7 @@ public class BudgetController : Controller
             return View(model);
         }
 
-        if (User.Identity.IsAuthenticated)
-        {
-            existingTransaction.UserId = GetCurrentUserId().Result;
-        }
-        else
-        {
-            existingTransaction.UserId ??= "Anonymous";
-        }
+        existingTransaction.UserId = userId;
 
         _context.SaveChanges(); // Save updated transaction
         return RedirectToAction("Index"); // Redirect to Index after update
@@ -224,9 +219,10 @@ public class BudgetController : Controller
 
     // POST: DeleteTransaction
     [HttpPost]
-    public IActionResult DeleteTransaction(int id)
+    public async Task<IActionResult> DeleteTransaction(int id)
     {
-        var transaction = _context.Transactions.Find(id);
+        var userId = await GetCurrentUserId();
+        var transaction = _context.Transactions.FirstOrDefault(t => t.Id == id && t.UserId == userId);
         if (transaction == null)
         {
             return NotFound();
@@ -238,10 +234,12 @@ public class BudgetController : Controller
         return RedirectToAction("Index");
     }
 
-    public IActionResult ManageBudgetOld()
+    public async Task<IActionResult> ManageBudgetOld()
     {
+        var userId = await GetCurrentUserId();
+
         // Retrieve budget data
-        var budgetLimit = _context.Budgets.FirstOrDefault(); // Or however you retrieve the budget data
+        var budgetLimit = _context.Budgets.FirstOrDefault(b => b.UserId == userId); // Or however you retrieve the budget data
 
         if (budgetLimit == null)
         {
@@ -249,11 +247,11 @@ public class BudgetController : Controller
         }
         // Calculate total spending for this month and year
         var totalSpentThisMonth = _context.Transactions
-            .Where(t => t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
+            .Where(t => t.UserId == userId && t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
             .Sum(t => (double)t.Amount);  // Convert to double
 
         var totalSpentThisYear = _context.Transactions
-            .Where(t => t.Date.Year == DateTime.Now.Year)
+            .Where(t => t.UserId == userId && t.Date.Year == DateTime.Now.Year)
             .Sum(t => (double)t.Amount);  // Convert to double
 
         // Pass data to the view
@@ -276,6 +274,7 @@ public class BudgetController : Controller
     {
         if (ModelState.IsValid)
         {
+            model.UserId = await GetCurrentUserId();
             _context.BudgetGoals.Add(model);
             await _context.SaveChangesAsync();
             return RedirectToAction("ManageBudget");
@@ -287,7 +286,8 @@ public class BudgetController : Controller
     [HttpGet]
     public async Task<IActionResult> EditBudget(int id)
     {
-        var budgetGoal = await _context.BudgetGoals.FindAsync(id);
+        var userId = await GetCurrentUserId();
+        var budgetGoal = await _context.BudgetGoals.FirstOrDefaultAsync(bg => bg.Id == id && bg.UserId == userId);
         if (budgetGoal == null)
         {
             return NotFound();
@@ -301,6 +301,13 @@ public class BudgetController : Controller
     {
         if (ModelState.IsValid)
         {
+            var userId = await GetCurrentUserId();
+            var existingBudget = await _context.BudgetGoals.FirstOrDefaultAsync(bg => bg.Id == model.Id && bg.UserId == userId);
+            if (existingBudget == null)
+            {
+                return NotFound();
+            }
+            model.UserId = userId;
             _context.Update(model);
             await _context.SaveChangesAsync();
             return RedirectToAction("ManageBudget");
@@ -312,7 +319,8 @@ public class BudgetController : Controller
     [HttpGet]
     public async Task<IActionResult> DeleteBudget(int id)
     {
-        var budgetGoal = await _context.BudgetGoals.FindAsync(id);
+        var userId = await GetCurrentUserId();
+        var budgetGoal = await _context.BudgetGoals.FirstOrDefaultAsync(bg => bg.Id == id && bg.UserId == userId);
         if (budgetGoal == null)
         {
             return NotFound();
@@ -324,7 +332,8 @@ public class BudgetController : Controller
     [HttpPost, ActionName("DeleteBudget")]
     public async Task<IActionResult> DeleteBudgetConfirmed(int id)
     {
-        var budgetGoal = await _context.BudgetGoals.FindAsync(id);
+        var userId = await GetCurrentUserId();
+        var budgetGoal = await _context.BudgetGoals.FirstOrDefaultAsync(bg => bg.Id == id && bg.UserId == userId);
         if (budgetGoal != null)
         {
             _context.BudgetGoals.Remove(budgetGoal);
@@ -337,7 +346,8 @@ public class BudgetController : Controller
     [HttpGet]
     public async Task<IActionResult> DetailsBudget(int id)
     {
-        var budgetGoal = await _context.BudgetGoals.FindAsync(id);
+        var userId = await GetCurrentUserId();
+        var budgetGoal = await _context.BudgetGoals.FirstOrDefaultAsync(bg => bg.Id == id && bg.UserId == userId);
         if (budgetGoal == null)
         {
             return NotFound();
@@ -346,10 +356,12 @@ public class BudgetController : Controller
     }
 
 
-    public IActionResult FilterTransactions(TransactionFilterViewModel model)
+    public async Task<IActionResult> FilterTransactions(TransactionFilterViewModel model)
  {
-     // Start with all transactions from the database
-     var transactions = _context.Transactions.AsQueryable();
+     var userId = await GetCurrentUserId();
+
+     // Start with all transactions from the database for current user
+     var transactions = _context.Transactions.Where(t => t.UserId == userId).AsQueryable();
  
      // Filter by category if provided
      if (!string.IsNullOrEmpty(model.Category))
@@ -379,9 +391,11 @@ public class BudgetController : Controller
  [HttpPost]
 public async Task<IActionResult> SetMinimumThreshold(decimal MinimumBudgetThreshold)
 {
+    var userId = await GetCurrentUserId();
+
     // Retrieve the active budget goal
     var budgetGoal = await _context.BudgetGoals
-        .Where(bg => bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+        .Where(bg => bg.UserId == userId && bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
         .FirstOrDefaultAsync();
 
     if (budgetGoal == null)
@@ -389,6 +403,7 @@ public async Task<IActionResult> SetMinimumThreshold(decimal MinimumBudgetThresh
         // Create a new budget goal if none exists
         budgetGoal = new BudgetGoal
         {
+            UserId = userId,
             MinimumBudgetThreshold = MinimumBudgetThreshold,
             StartDate = DateTime.Now,
             EndDate = DateTime.Now.AddMonths(1), // Example: 1-month budget period

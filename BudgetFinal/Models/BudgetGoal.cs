@@ -6,6 +6,10 @@ namespace BudgetFinal.Models
     public class BudgetGoal
     {
         public int Id { get; set; }
+
+        [Required]
+        public string UserId { get; set; }
+
         [Required]
          public DateTime StartDate { get; set; } 
         public DateTime EndDate { get; set; }   
@@ -14,7 +18,7 @@ namespace BudgetFinal.Models
 
         //Min budget threshhold property 
         public decimal MinimumBudgetThreshold { get; set; }
-        
+
 
     }
 }

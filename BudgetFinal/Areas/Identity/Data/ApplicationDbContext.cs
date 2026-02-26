@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using BudgetFinal.Models;
 
 namespace Testing.Areas.Identity.Data;
 
@@ -10,6 +11,10 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
         : base(options)
     {
     }
+
+    public DbSet<BudgetFinal.Models.Transaction> Transactions { get; set; }
+    public DbSet<BudgetLimit> Budgets { get; set; }
+    public DbSet<BudgetGoal> BudgetGoals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

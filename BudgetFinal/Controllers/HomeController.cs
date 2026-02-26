@@ -15,7 +15,13 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
-        return View();
+        // If user is authenticated, redirect to Budget
+        if (User.Identity.IsAuthenticated)
+        {
+            return RedirectToAction("Index", "Budget");
+        }
+        // Otherwise, redirect to login
+        return RedirectToPage("/Account/Login", new { area = "Identity" });
     }
 
     public IActionResult Privacy()

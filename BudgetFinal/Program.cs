@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -50,7 +51,12 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-
+//auto create tables inside applications
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
 
 
 app.MapControllerRoute(

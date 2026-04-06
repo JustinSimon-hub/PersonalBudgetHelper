@@ -4,43 +4,49 @@
     ViewData["Title"] = "Manage Budget";
 }
 
-<h2>Manage Budget</h2>
+<div class="page-header">
+    <h1>Budget Goal</h1>
+    <p>Track your spending against your budget limit.</p>
+</div>
 
 @if (TempData["BudgetAlert"] != null)
 {
-    <div class="alert alert-warning">
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
         @TempData["BudgetAlert"]
     </div>
 }
 
-<div>
-    <h4>Budget Goal</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            Start Date
-        </dt>
-        <dd class="col-sm-10">
-            @Model.StartDate.ToShortDateString()
-        </dd>
-        <dt class="col-sm-2">
-            End Date
-        </dt>
-        <dd class="col-sm-10">
-            @Model.EndDate.ToShortDateString()
-        </dd>
-        <dt class="col-sm-2">
-            Limit Amount
-        </dt>
-        <dd class="col-sm-10">
-            @Model.LimitAmount
-        </dd>
-        <dt class="col-sm-2">
-            Total Expenses
-        </dt>
-        <dd class="col-sm-10">
-            @ViewBag.TotalExpenses
-        </dd>
-    </dl>
-    <a asp-action="CreateBudget" class="btn btn-primary">Create New Budget</a>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Start Date</div>
+            <div class="stat-value" style="font-size:1.1rem;">@Model.StartDate.ToString("MMM d, yyyy")</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">End Date</div>
+            <div class="stat-value" style="font-size:1.1rem;">@Model.EndDate.ToString("MMM d, yyyy")</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Budget Limit</div>
+            <div class="stat-value">@Model.LimitAmount.ToString("C")</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Total Expenses</div>
+            <div class="stat-value" style="color:#dc2626;">@(ViewBag.TotalExpenses != null ? ((decimal)ViewBag.TotalExpenses).ToString("C") : "$0.00")</div>
+        </div>
+    </div>
 </div>
+
+<a asp-action="CreateBudget" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Create New Budget
+</a>
+<a asp-action="Index" class="btn btn-outline-secondary ms-2">
+    <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+</a>

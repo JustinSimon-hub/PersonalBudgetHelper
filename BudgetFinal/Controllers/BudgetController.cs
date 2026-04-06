@@ -234,31 +234,32 @@ public class BudgetController : Controller
         return RedirectToAction("Index");
     }
 
-    public async Task<IActionResult> ManageBudgetOld()
+    public async Task<IActionResult> ManageBudget()
     {
         var userId = await GetCurrentUserId();
 
-        // Retrieve budget data
-        var budgetLimit = _context.Budgets.FirstOrDefault(b => b.UserId == userId); // Or however you retrieve the budget data
+        // Retrieve the active budget goal for the current user
+        var budgetGoal = await _context.BudgetGoals
+            .Where(bg => bg.UserId == userId && bg.StartDate <= DateTime.Now && bg.EndDate >= DateTime.Now)
+            .FirstOrDefaultAsync();
 
-        if (budgetLimit == null)
+        if (budgetGoal == null)
         {
-            budgetLimit = new BudgetLimit(); // Create a new budget limit object if none exists
+            // No active budget — redirect to create one
+            return RedirectToAction("CreateBudget");
         }
-        // Calculate total spending for this month and year
-        var totalSpentThisMonth = _context.Transactions
-            .Where(t => t.UserId == userId && t.Date.Month == DateTime.Now.Month && t.Date.Year == DateTime.Now.Year)
-            .Sum(t => (double)t.Amount);  // Convert to double
 
-        var totalSpentThisYear = _context.Transactions
-            .Where(t => t.UserId == userId && t.Date.Year == DateTime.Now.Year)
-            .Sum(t => (double)t.Amount);  // Convert to double
+        // Calculate total expenses within the budget period
+        var totalExpenses = await _context.Transactions
+            .Where(t => t.UserId == userId
+                        && t.TransactionType == "Expense"
+                        && t.Date >= budgetGoal.StartDate
+                        && t.Date <= budgetGoal.EndDate)
+            .SumAsync(t => (decimal)Math.Abs((double)t.Amount));
 
-        // Pass data to the view
-        ViewBag.TotalSpentThisMonth = totalSpentThisMonth;
-        ViewBag.TotalSpentThisYear = totalSpentThisYear;
+        ViewBag.TotalExpenses = totalExpenses;
 
-        return View(budgetLimit); // Pass the budget limit model to the view
+        return View(budgetGoal);
     }
 
     // GET: Budget/Create
